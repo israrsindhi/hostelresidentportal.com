@@ -1,503 +1,1937 @@
-<!--
-Full single-file web app (index.html) for Indus Boys Hostel Portal with:
-- OneSignal push notifications (client-side snippet included; replace YOUR_ONESIGNAL_APP_ID)
-- Service worker files required (OneSignal SDK worker files shown below — place them at your server root)
-- Modern glassmorphism UI, header dropdown, profile modal, team/developer cards
-- PDF export (html2pdf.js) with a redesigned receipt layout
-
-IMPORTANT:
-- This must be served over HTTPS (or localhost) for service workers & push to work.
-- Create a OneSignal Web Push app and paste your APP ID into the ONESIGNAL_APP_ID constant in the script.
-- Upload the two OneSignal worker files (OneSignalSDKWorker.js and OneSignalSDKUpdaterWorker.js) to your webserver root alongside this index.html. Example content for them is included at the bottom of this file as commented blocks.
-
-Save this as `index.html` and host with HTTPS. Replace placeholders before testing.
--->
-
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-<title>Indus Boys Hostel — Resident Portal (OneSignal)</title>
+<title>The Indus Boys Hostel Services, Sukkur — Resident Portal</title>
 
-<!-- OneSignal SDK (will load if served via https) -->
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+<link rel="icon" type="image/png" href="https://i.postimg.cc/7CFG4hRp/hostel-logo.png">
 
-<!-- html2pdf for PDF export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0f172a;
-    --card: rgba(255,255,255,0.04);
-    --glass: rgba(255,255,255,0.04);
-    --muted: #94a3b8;
-    --accent: linear-gradient(135deg,#06b6d4,#0ea5e9);
-    --glass-border: rgba(255,255,255,0.06);
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent: #0ea5e9;
+    --accent-dark: #0284c7;
+    --accent-light: #7dd3fc;
     --success: #10b981;
+    --warning: #f59e0b;
     --danger: #ef4444;
-    --radius: 14px;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#071029 0%, #081430 70%);}
+  .dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --shadow: 0 4px 6px -1px rgb(255 255 255 / 0.05), 0 2px 4px -2px rgb(255 255 255 / 0.05);
+  }
+  * {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .app-container {
+    max-width: 500px;
+    margin: 0 auto;
+    min-height: 10vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 70px; /* Space for fixed navigation */
+  }
+  /* Header Styles */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: var(--shadow);
+  }
+  .header-info {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  /* NEW: Logo styling */
+  .header-logo {
+      height: 35px; /* Adjust height for mobile header */
+      width: auto;
+  }
 
-  .app-header{position:sticky;top:0;z-index:60;background:rgba(255,255,255,0.02);backdrop-filter:blur(6px);border-bottom:1px solid var(--glass-border);}
-  .header-content{display:flex;align-items:center;gap:12px;padding:12px 18px;max-width:1100px;margin:0 auto;}
-  .brand{display:flex;align-items:center;gap:12px;cursor:pointer}
-  .brand-logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);display:flex;align-items:center;justify-content:center;font-weight:800;color:#052025}
-  .brand-title{font-weight:700}
-  .header-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .header-icon {
+    background: var(--bg-tertiary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .header-icon:hover {
+    background: var(--border-color);
+  }
+  #headerAvatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
 
-  .icon-btn{background:transparent;border:1px solid var(--glass-border);padding:8px;border-radius:10px;color:#cfe7f7;cursor:pointer}
+  /* Main Content Area */
+  .content {
+    padding: 16px;
+    flex-grow: 1;
+  }
+  .hidden {
+    display: none !important;
+  }
+  .card {
+    background-color: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  
+  /* Dashboard Specific */
+  .info-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  .info-icon.info { background: var(--accent-light); }
+  .info-title { font-weight: 600; }
+  .info-text { font-size: 0.85rem; color: var(--text-secondary); }
 
-  /* dropdown */
-  .profile-btn{display:flex;align-items:center;gap:8px;cursor:pointer;position:relative}
-  .profile-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.06)}
-  .profile-avatar img{width:100%;height:100%;object-fit:cover}
-  .dropdown{position:absolute;right:0;top:calc(100% + 8px);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid var(--glass-border);padding:10px;border-radius:12px;min-width:220px;box-shadow:0 8px 30px rgba(2,6,23,0.6);display:none}
-  .dropdown.show{display:block}
-  .dropdown a{display:flex;gap:10px;padding:8px;border-radius:8px;color:#cfe7f7;text-decoration:none}
-  .dropdown a:hover{background:rgba(255,255,255,0.02)}
+  .day-selector {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .day-btn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    margin-right: 8px;
+    cursor: pointer;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .day-btn.active {
+    background-color: var(--accent);
+    color: white;
+    box-shadow: 0 2px 5px rgba(14, 165, 233, 0.5);
+  }
 
-  .app-container{max-width:1100px;margin:20px auto;padding:0 18px 120px}
-  .grid{display:grid;grid-template-columns:1fr;gap:18px}
-  @media(min-width:960px){.grid{grid-template-columns:360px 1fr}}
+  .meal-card {
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    transition: all 0.3s;
+  }
+  .meal-card:hover {
+    box-shadow: var(--shadow);
+  }
+  .meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .meal-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .meal-status {
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .status-live { background-color: var(--danger); color: white; }
+  .status-next { background-color: var(--warning); color: var(--text-primary); }
+  .meal-time {
+    font-size: 0.85rem;
+    color: var(--accent-dark);
+  }
+  .meal-items {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border-color);
+  }
 
-  /* left column */
-  .left-column{display:flex;flex-direction:column;gap:18px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid var(--glass-border);padding:16px;border-radius:14px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
-  .card h3{margin:0 0 8px 0;font-size:16px}
-  .muted{color:var(--muted);font-size:13px}
+  /* Team List */
+  .student-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+  .student-item:last-child {
+    border-bottom: none;
+  }
+  .student-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-light);
+  }
+  .student-name {
+    font-weight: 600;
+  }
+  .student-roll {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .student-item:hover {
+      background-color: var(--bg-tertiary);
+      margin: 0 -16px;
+      padding: 10px 16px;
+  }
 
-  .profile-large{display:flex;gap:12px;align-items:center}
-  .profile-large .avatar{width:72px;height:72px;border-radius:12px;overflow:hidden}
-  .profile-large .avatar img{width:100%;height:100%;object-fit:cover}
-  .profile-large .meta{flex:1}
-  .edit-btn{padding:8px 10px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:#cfe7f7;cursor:pointer}
+  /* Schedule Tabs */
+  .schedule-tabs {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .schedule-tab {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+  .schedule-tab.active {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+  }
 
-  /* team list */
-  .team-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .team-card{padding:10px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.015),transparent);display:flex;gap:10px;align-items:center}
-  .team-card img{width:56px;height:56px;border-radius:10px;object-fit:cover}
+  /* Receipt View */
+  .receipt-preview {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow);
+  }
+  .receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--text-primary);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  .receipt-logo {
+    /* Updated for image */
+    height: 50px; 
+    width: auto;
+  }
+  .receipt-info {
+    text-align: right;
+  }
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dotted var(--border-color);
+  }
+  .receipt-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .receipt-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+  }
 
-  /* right column */
-  .meals-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .days-row{display:flex;gap:8px;margin:12px 0;overflow:auto}
-  .day-pill{padding:8px 12px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:#cfe7f7;cursor:pointer;white-space:nowrap}
-  .day-pill.active{background:linear-gradient(90deg,#06b6d4,#0ea5e9);color:#002d32}
+  /* Profile View */
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .profile-avatar-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+  }
+  #profileAvatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+  }
+  .avatar-upload-label {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--accent);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  #pAvatarFile {
+    display: none;
+  }
+  .profile-form-group {
+    margin-bottom: 12px;
+  }
+  .profile-form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .profile-form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  .profile-form-group input:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s, opacity 0.2s;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background-color: var(--accent);
+    color: white;
+    box-shadow: 0 2px 5px rgba(14, 165, 233, 0.5);
+  }
+  .btn-primary:hover {
+    background-color: var(--accent-dark);
+  }
+  .btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background-color: var(--border-color);
+  }
+  .btn-full {
+    width: 100%;
+  }
+  .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+  }
+  .profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  /* Complaint Textarea Fix */
+  textarea {
+      resize: vertical;
+      min-height: 100px;
+  }
 
-  .meals-grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:680px){.meals-grid{grid-template-columns:repeat(2,1fr)}}
-  .meal-card{padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.015),transparent)}
-  .meal-name{font-weight:700;margin-bottom:6px}
-  .meal-time{font-size:13px;color:var(--muted);margin-bottom:8px}
-  .meal-items{font-size:14px;color:#d9eefb}
-  .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
-  .badge.live{background:linear-gradient(90deg,#10b981,#059669);color:white}
-  .badge.next{background:linear-gradient(90deg,#0ea5e9,#0284c7);color:white}
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1);
+    z-index: 20;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 8px 0;
+  }
+  .nav-item {
+    flex-grow: 1;
+    text-align: center;
+    padding: 8px 0;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+  }
+  .nav-item i {
+    font-size: 1.2rem;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .nav-item span {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .nav-item.active {
+    color: var(--accent);
+  }
 
-  /* notification */
-  .info-card{display:flex;gap:12px;align-items:flex-start}
-  .info-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
-  .info-content .title{font-weight:800}
-  .info-content .text{color:var(--muted);font-size:14px}
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+  }
+  .modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+  .modal-content {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+    box-shadow: var(--shadow);
+  }
+  .modal-overlay.show .modal-content {
+    transform: translateY(0);
+  }
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .modal-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+  }
+  .modal-form-group {
+    margin-bottom: 15px;
+  }
+  .modal-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  .modal-form-group input[type="text"], 
+  .modal-form-group input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  .modal-form-group input[type="checkbox"] {
+      margin-right: 8px;
+  }
+  .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+  }
+  
+  /* Toast Notification */
+  .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 40;
+      opacity: 0;
+      transition: opacity 0.3s;
+  }
+  .toast-success { background-color: var(--success); }
+  .toast-danger { background-color: var(--danger); }
+  .toast-info { background-color: var(--accent); }
+  .toast-warning { background-color: var(--warning); color: var(--text-primary); }
 
-  /* receipt preview */
-  .receipt-preview{margin-top:12px;border-radius:12px;padding:14px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid var(--glass-border)}
-  .receipt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.02)}
-
-  /* pdf print theme (for export) */
-  #receiptForPdf{width:800px;padding:28px;font-family:Inter,Arial;background:white;color:#052025}
-  #receiptForPdf .pdf-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-  #receiptForPdf .pdf-brand{display:flex;gap:12px;align-items:center}
-  #receiptForPdf .pdf-brand .logo{width:72px;height:72px;border-radius:12px;background:linear-gradient(90deg,#06b6d4,#0ea5e9);display:flex;align-items:center;justify-content:center;font-weight:800;color:#052025}
-  #receiptForPdf .pdf-title{font-weight:800;font-size:20px}
-  #receiptForPdf .pdf-meta{font-size:13px;color:#334155}
-  #receiptForPdf .pdf-body{margin-top:12px}
-  #receiptForPdf .pdf-table{width:100%;border-collapse:collapse;margin-top:12px}
-  #receiptForPdf .pdf-table td{padding:10px;border-bottom:1px solid #eef2f7}
-  #receiptForPdf .pdf-footer{display:flex;justify-content:space-between;margin-top:18px;align-items:center}
-  #receiptForPdf .signature{height:60px}
-
-  /* footer / bottom nav */
-  .bottom-actions{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:10px;border-radius:999px;border:1px solid var(--glass-border);display:flex;gap:8px}
-  .btn{padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:#cfe7f7;cursor:pointer}
-  .btn.primary{background:linear-gradient(90deg,#06b6d4,#0ea5e9);color:#002d32;border:none}
-
-  /* modal */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px}
-  .modal-backdrop.show{display:flex}
-  .modal{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:18px;border-radius:12px;min-width:320px;border:1px solid var(--glass-border)}
-  input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8;margin-top:8px}
-  label{font-size:13px;color:var(--muted);}
+  /* PDF Content Styling (Hidden for screen, visible for html2canvas) */
+  #receiptForPdf {
+      position: fixed;
+      left: -9999px; /* Hide off-screen */
+      top: -9999px;
+      width: 210mm; /* A4 width */
+      height: 297mm; /* A4 height */
+      background: white;
+      padding: 20mm;
+      color: #000;
+      font-family: 'Roboto', sans-serif;
+      font-size: 12pt;
+  }
+  .pdf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+  }
+  .pdf-logo {
+      /* Updated for image */
+      height: 40px; 
+      width: auto;
+      margin-right: 15px;
+  }
+  .pdf-company-info .title {
+      font-size: 18pt;
+      font-weight: 700;
+  }
+  .pdf-company-info .subtitle {
+      font-size: 10pt;
+      color: #475569;
+  }
+  .pdf-receipt-meta {
+      text-align: right;
+      font-size: 10pt;
+  }
+  .pdf-receipt-meta div {
+      margin-top: 3px;
+  }
+  .pdf-section-title {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 25px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+  }
+  .pdf-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 20px;
+  }
+  .pdf-detail-item div {
+      font-size: 9pt;
+      color: #64748b;
+  }
+  .pdf-detail-item strong {
+      font-size: 11pt;
+      font-weight: 500;
+      display: block;
+      margin-top: 2px;
+  }
+  .pdf-amount-words {
+      font-style: italic;
+      margin-top: 15px;
+      font-size: 10pt;
+      padding: 5px;
+      border: 1px dashed #ccc;
+  }
+  .pdf-signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      align-items: flex-end;
+  }
+  .pdf-signature-box {
+      border-top: 1px solid #000;
+      text-align: center;
+      padding-top: 5px;
+      width: 180px;
+      /* Ensure content is stacked */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+  }
+  /* NEW STYLE FOR SIGNATURE IMAGE */
+  .signature-image {
+      max-width: 120px;
+      height: auto;
+      margin-bottom: -10px; /* Pull image closer to line */
+      display: block;
+  }
+  .pdf-signature-name {
+      font-size: 10pt;
+      font-weight: 700;
+  }
+  .pdf-signature-title {
+      font-size: 9pt;
+      color: #475569;
+  }
+  .pdf-notes {
+      font-size: 9pt;
+      text-align: right;
+      color: #64748b;
+  }
+  .pdf-footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 8pt;
+      color: #64748b;
+  }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="app-header">
-    <div class="header-content">
-      <div class="brand" id="brandHome">
-        <div class="brand-logo">IBH</div>
-        <div>
-          <div class="brand-title">Indus Boys Hostel</div>
-          <div class="muted" style="font-size:12px">Resident Portal</div>
+
+<div class="app-container">
+  <header class="header">
+    <div class="header-info">
+        <img src="https://i.postimg.cc/7CFG4hRp/hostel-logo.png" alt="Hostel Logo" class="header-logo" />
+    </div>
+    <div class="header-actions">
+        <div class="header-icon" id="themeToggle">🌙</div>
+        <div class="header-icon" id="headerProfile">
+            <img id="headerAvatar" src="https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80" alt="Profile" />
         </div>
-      </div>
-
-      <div class="header-actions">
-        <button class="icon-btn" id="toggleTheme" title="Toggle theme">🌓</button>
-
-        <div class="profile-btn" id="profileBtn">
-          <div class="profile-avatar"><img id="headerAvatar" src="https://i.postimg.cc/ThkGgFs4/member.png" alt="avatar"></div>
-          <div style="color:#cfe7f7;font-weight:700;">Israr</div>
-
-          <div class="dropdown" id="profileDropdown">
-            <a href="#" id="viewProfileBtn">👁️ View Profile</a>
-            <a href="#" id="editProfileBtn">✏️ Edit Profile</a>
-            <a href="#" id="myReceiptsBtn">🧾 My Receipts</a>
-            <a href="#" id="signOutBtn">🚪 Sign Out</a>
-          </div>
-        </div>
-      </div>
     </div>
   </header>
 
-  <div class="app-container">
-    <div class="grid">
-      <!-- LEFT COLUMN -->
-      <div class="left-column">
-        <div class="card">
-          <div class="profile-large">
-            <div class="avatar"><img id="profileLargeImg" src="https://i.postimg.cc/ThkGgFs4/member.png" alt="avatar"></div>
-            <div class="meta">
-              <div id="profileName" style="font-weight:800">Guest User</div>
-              <div class="muted" id="profileRole">Hostel Resident • Room -</div>
-              <div style="margin-top:8px;display:flex;gap:8px">
-                <button class="edit-btn" id="openEditProfile">Edit Profile</button>
-                <button class="edit-btn" id="notifySubscribe">Enable Push</button>
-              </div>
-            </div>
-          </div>
-        </div>
+  <main class="content">
 
-        <div class="card">
-          <h3>Management</h3>
-          <div class="team-grid" id="teamGrid">
-            <!-- team cards injected here -->
+    <section id="view-dashboard" class="view">
+      <h1 id="welcomeMsg" class="text-xl font-bold mb-2">Good Day, Resident!</h1>
+      <p id="todayDate" class="text-sm text-muted mb-4"></p>
+      <div class="card info-card">
+          <div class="info-icon info">🕒</div>
+          <div>
+              <div class="info-title">Current Time</div>
+              <div id="clock" class="text-xl font-bold">12:00 PM</div>
           </div>
-        </div>
-
-        <div class="card">
-          <h3>Quick Links</h3>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-            <button class="btn" id="openRules">📜 Terms & Rules</button>
-            <button class="btn" id="openSignUp">➕ Create Profile</button>
-            <button class="btn" id="openTeamManager">👥 Team Manager</button>
-          </div>
-        </div>
       </div>
 
-      <!-- RIGHT COLUMN -->
-      <div>
+      <h2 class="text-lg font-semibold mt-6 mb-3" style="font-size:1.25rem;">Daily Meal Schedule</h2>
+      <div id="daySelector" class="day-selector"></div>
+      <div id="mealNotification" class="card info-card" style="margin-bottom:16px;"></div>
+      <div id="mealsContainer" class="meals-container"></div>
+    </section>
+
+    <section id="view-schedule" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Weekly Schedule</h2>
+        <div id="weekTabs" class="schedule-tabs"></div>
+        <div id="scheduleDetails" class="schedule-details"></div>
+    </section>
+
+    <section id="view-receipt" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Generate Fee Receipt</h2>
         <div class="card">
-          <div class="meals-header">
-            <div>
-              <div style="font-weight:800;font-size:18px" id="welcomeMsg">Welcome!</div>
-              <div class="muted" id="todayDate">—</div>
+            <div class="profile-form-group">
+                <label for="searchName">Search by Name or Roll No:</label>
+                <input type="text" id="searchName" placeholder="e.g., Israr or 20K-1234">
             </div>
-            <div style="text-align:right">
-              <div class="muted">Time</div>
-              <div style="font-weight:800" id="clock">--:--</div>
-            </div>
-          </div>
-
-          <div class="days-row" id="daySelector"></div>
-
-          <div class="meals-grid" id="mealsContainer"></div>
-
-          <div class="card" style="margin-top:12px">
-            <div class="info-card" id="mealNotification"></div>
-          </div>
+            <button id="searchBtn" class="btn btn-primary btn-full">Search Student</button>
         </div>
 
-        <div class="card" style="margin-top:18px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-weight:800">Residents</div>
-              <div class="muted">Current hostel residents</div>
+        <div id="searchResult" class="mt-4">
             </div>
-            <div>
-              <input id="searchName" type="text" placeholder="Search name or roll" style="padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8">
-              <button class="btn" id="searchBtn">🔍</button>
-            </div>
-          </div>
 
-          <div id="studentsList" style="margin-top:12px"></div>
+        <div id="receiptPreviewContainer" class="mt-4">
+            </div>
+    </section>
+
+    <section id="view-team" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Hostel Management Team</h2>
+        <div class="card">
+            <div id="managementTeamList">
+                </div>
+        </div>
+        
+        <h2 class="text-xl font-bold mt-4 mb-3">Current Residents</h2>
+        <div class="card">
+            <div id="studentsList">
+                </div>
+        </div>
+    </section>
+    
+    <section id="view-complaint" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Submit a Complaint / Suggestion</h2>
+        <div class="card">
+            <p class="card-subtitle" style="margin-bottom:15px;">Your feedback is important. Please use the form below to submit issues directly to the management. You can choose to send via Email or WhatsApp.</p>
+            <div class="profile-form-group">
+                <label for="complaintSubject">Subject (Room Issue, Mess Suggestion, etc.)</label>
+                <input type="text" id="complaintSubject" placeholder="Brief subject line" required>
+            </div>
+            <div class="profile-form-group">
+                <label for="complaintBody">Detailed Message</label>
+                <textarea id="complaintBody" rows="5" placeholder="Describe the issue or suggestion clearly..." required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-tertiary); color: var(--text-primary);"></textarea>
+            </div>
+            <div class="profile-actions" style="margin-top:20px;">
+                <button id="sendEmailBtn" class="btn btn-primary flex-1"><i class="fas fa-envelope"></i> Send via Email</button>
+                <button id="sendWhatsappBtn" class="btn btn-secondary flex-1" style="background-color:#25D366; color:white;"><i class="fab fa-whatsapp"></i> Send via WhatsApp</button>
+            </div>
+            <p id="complaintMsg" class="text-sm" style="margin-top:15px;"></p>
+        </div>
+    </section>
+
+
+    <section id="view-profile" class="view hidden">
+        <div class="profile-header card">
+            <div class="profile-avatar-container">
+                <img id="profileAvatar" src="https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80" alt="Profile Avatar" />
+                <label for="pAvatarFile" class="avatar-upload-label">
+                    <i class="fas fa-camera"></i>
+                </label>
+                <input type="file" id="pAvatarFile" accept="image/*">
+            </div>
+            <h2 id="profileNameTitle" class="text-2xl font-bold mt-2">Guest User</h2>
+            <p id="profileSmall" class="text-sm text-muted">Roll: N/A | Room: N/A</p>
         </div>
 
-        <div class="card" style="margin-top:18px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-weight:800">Generate Receipt</div>
-              <div class="muted">Search a student and download a polished PDF receipt</div>
+        <div class="card">
+            <h3 class="card-title">Personal Information</h3>
+            <div class="profile-form-group">
+                <label for="pName">Full Name</label>
+                <input type="text" id="pName" placeholder="Your Full Name">
             </div>
-          </div>
-
-          <div id="searchResult" style="margin-top:12px"></div>
-          <div id="receiptPreviewContainer"></div>
+            <div class="profile-form-group">
+                <label for="pRoll">Roll Number</label>
+                <input type="text" id="pRoll" placeholder="e.g., 20K-1234">
+            </div>
+            <div class="profile-form-group">
+                <label for="pEmail">Email Address</label>
+                <input type="email" id="pEmail" placeholder="you@example.com">
+            </div>
+            <div class="profile-form-group">
+                <label for="pPhone">Phone Number</label>
+                <input type="text" id="pPhone" placeholder="03001234567">
+            </div>
+            <div class="profile-form-group">
+                <label for="pRoom">Room Number</label>
+                <input type="text" id="pRoom" placeholder="e.g., A-101">
+            </div>
+            <p id="profileMsg" class="text-sm text-success" style="color:var(--success); margin-bottom:15px;">Fill in your details to save them locally.</p>
+            <div class="profile-actions">
+                <button id="saveProfile" class="btn btn-primary flex-1">Save Profile</button>
+                <button id="emailProfile" class="btn btn-secondary flex-1">Email Details</button>
+            </div>
+            <button id="viewRulesBtn" class="btn btn-secondary btn-full mt-3">View Hostel Rules</button>
         </div>
-      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-view="dashboard">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
     </div>
-  </div>
+    <div class="nav-item" data-view="schedule">
+        <i class="fas fa-utensils"></i>
+        <span>Meals</span>
+    </div>
+    <div class="nav-item" data-view="receipt">
+        <i class="fas fa-file-invoice"></i>
+        <span>Receipts</span>
+    </div>
+    <div class="nav-item" data-view="team">
+        <i class="fas fa-users"></i>
+        <span>Team</span>
+    </div>
+    <div class="nav-item" data-view="complaint">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Complaint</span>
+    </div>
+    <div class="nav-item" data-view="profile">
+        <i class="fas fa-user-circle"></i>
+        <span>Profile</span>
+    </div>
+  </nav>
+</div>
 
-  <!-- BOTTOM ACTIONS -->
-  <div class="bottom-actions">
-    <button class="btn" id="openTeam">👥 Team</button>
-    <button class="btn" id="openReceipts">🧾 Receipts</button>
-    <button class="btn primary" id="downloadAllReceipts">Export PDF</button>
-  </div>
+<div id="signupModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="modal-title">Welcome to IBH!</h2>
+        <p class="modal-subtitle">Create your local resident profile.</p>
+        <div class="modal-form-group">
+            <label for="sName">Full Name</label>
+            <input type="text" id="sName" placeholder="Your Full Name">
+        </div>
+        <div class="modal-form-group">
+            <label for="sRoll">Roll Number</label>
+            <input type="text" id="sRoll" placeholder="e.g., 20K-1234">
+        </div>
+        <div class="modal-form-group">
+            <label for="sEmail">Email Address</label>
+            <input type="email" id="sEmail" placeholder="you@example.com">
+        </div>
+        <div class="modal-form-group">
+            <label for="sPhone">Phone Number</label>
+            <input type="text" id="sPhone" placeholder="03001234567">
+        </div>
+        <div class="modal-form-group">
+            <label for="sRoom">Room Number</label>
+            <input type="text" id="sRoom" placeholder="e.g., A-101">
+        </div>
+        <div class="modal-form-group" style="display:flex; align-items:center;">
+            <input type="checkbox" id="acceptTerms">
+            <label for="acceptTerms" style="display:inline; margin-bottom:0;">I accept the <a href="#" id="openRulesFromSignup" style="color:var(--accent); font-weight:700;">Hostel Rules</a></label>
+        </div>
+        <p id="signupMsg" class="text-sm text-danger" style="color:var(--danger); margin-top:-10px;"></p>
+        <div class="modal-actions">
+            <button id="signupCancel" class="btn btn-secondary">Cancel</button>
+            <button id="createProfileBtn" class="btn btn-primary">Create Profile</button>
+        </div>
+    </div>
+</div>
 
-  <!-- MODALS -->
-  <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal" id="modalContent"></div>
-  </div>
+<div id="rulesModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="modal-title">Hostel Rules & Regulations</h2>
+        <div style="font-size:0.9rem; color:var(--text-secondary); line-height:1.5;">
+               <p>1. Silence must be maintained in the reading room and study areas.</p>
+<p>2. It is mandatory for you to keep secure your personal items (Mobile, Watch, or cash, etc.). In case of loss, hostel management will not be responsible.</p>
+<p>3. Visitors are allowed only with permission.</p>
+<p>4. <b>Cleaning hours are from 4:30 PM to 6:30 PM every day. Residents must cooperate.</b></p>
+<p>5. Mess timings must be strictly followed. No food will be served after closing time.</p>
+<p>6. Any damage to hostel property will be penalized.</p>
+<p>7. Smoking and use of any intoxicants are completely prohibited on the premises.</p>
+<p>8. Entry/exit is restricted between 11:00 PM – 6:00 AM without prior approval.</p>
+<p>9. Unauthorized or uninformed guests are not allowed.</p>
+<p>10. Random inspections may be conducted.</p>
+<p>11. Violation of rules can lead to suspension or removal from the hostel without refund at any stage.</p>
+        </div>
+        <div class="modal-actions">
+            <button id="closeRules" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+</div>
 
-  <!-- Hidden PDF receipt element (used for export) -->
-  <div id="receiptForPdf" style="display:none"></div>
+<div id="receiptForPdf"></div>
+
 
 <script>
-/* ================== CONFIG ================== */
-// Replace this with your OneSignal App ID (web push)
-const ONESIGNAL_APP_ID = 'YOUR_ONESIGNAL_APP_ID';
+  /* ========== DATA & CONFIGURATION (UPDATED CONTACTS) ========== */
+  let userProfile = null;
+  let currentView = 'dashboard';
+  let currentTheme = 'light';
+  
+  // NEW CONTACT CONSTANTS
+  const MANAGEMENT_EMAIL = 'indusboyshostelsuk@gmail.com';
+  const MANAGEMENT_PHONE_WA_DISPLAY = '0313-7352949';
+  const MANAGEMENT_PHONE_WA = '923137352949'; // Using '92' (Pakistan code) for WhatsApp link
 
-/* ================== SAMPLE DATA ================== */
-const studentsData = [
-  { name: "Ali Khan", rollNumber: "HS-101", feePaid: 1200, datePaid: "2024-09-15", phone: "+923001112233" },
-  { name: "Ayesha Baloch", rollNumber: "HS-102", feePaid: 1150, datePaid: "2024-09-10", phone: "+923009998877" },
-  { name: "Faizan Ahmed", rollNumber: "HS-103", feePaid: 1250, datePaid: "2024-08-30", phone: "+923004445566" },
-  { name: "Sara Noor", rollNumber: "HS-104", feePaid: 1200, datePaid: "2024-09-20", phone: "+923007776655" },
-  { name: "Israr Sindhi", rollNumber: "HS-105", feePaid: 1100, datePaid: "2024-09-07", phone: "+923001234567" }
-];
+  const DEFAULT_AVATAR_URL = 'https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80';
+  const ADMIN_SIGNATURE_URL = 'https://i.postimg.cc/vZztLrMQ/Red-and-White-Minimalist-Christmas-Circle-Sticker-removebg-preview.png'; 
+  const HOSTEL_LOGO_URL = 'https://i.postimg.cc/7CFG4hRp/hostel-logo.png';
 
-const mealSchedule = {
-  Monday: { Breakfast: { time: "7:00 AM - 8:00 AM", item: "Paratha, Eggs, Tea" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Chicken Biryani, Raita" }, Dinner: { time: "7:00 PM - 8:00 PM", item: "Mixed Veg, Chapati" } },
-  Tuesday: { Breakfast: { time: "7:00 AM - 8:00 AM", item: "Halwa Puri, Tea" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Beef Karahi, Rice" }, Dinner: { time: "7:00 PM - 8:00 PM", item: "Daal, Rice, Salad" } },
-  Wednesday: { Breakfast: { time: "7:00 AM - 8:00 AM", item: "Oats, Fruit, Milk" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Pulao, Chicken Karahi" }, Dinner: { time: "7:00 PM - 8:00 PM", item: "Kabab, Paratha" } },
-  Thursday: { Breakfast: { time: "7:00 AM - 8:00 AM", item: "Egg Omelette, Toast, Tea" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Qorma, Naan" }, Dinner: { time: "7:00 PM - 8:00 PM", item: "Spaghetti, Garlic Bread" } },
-  Friday: { Breakfast: { time: "7:30 AM - 8:30 AM", item: "Chai & Samosa" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Special Biryani" }, Dinner: { time: "7:00 PM - 8:30 PM", item: "Grilled Chicken, Salad" } },
-  Saturday: { Breakfast: { time: "8:00 AM - 9:00 AM", item: "Pancakes, Syrup" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Fish Curry, Rice" }, Dinner: { time: "7:00 PM - 8:00 PM", item: "Vegetable Stir Fry" } },
-  Sunday: { Breakfast: { time: "8:00 AM - 9:00 AM", item: "Paratha, Yogurt" }, Lunch: { time: "1:00 PM - 2:00 PM", item: "Karahi, Rice" }, Dinner: { time: "7:00 PM - 8:00 PM", item: "Mix Grill, Naan" } }
-};
+  const MEAL_TIMINGS = {
+      'Breakfast': { start: '8:15 AM', end: '9:30 AM' },
+      'Lunch': { start: '1:15 PM', end: '3:30 PM' },
+      'Dinner': { start: '7:45 PM', end: '9:00 PM' },
+  };
 
-const paidToStaff = [
-  { id:'faiq', name:'Mr. Faiq Ali', title:'Accountant', signature: 'Faiq Ali' },
-  { id:'ali', name:'Mr. Ali Faheem', title:'Warden', signature: 'Ali Faheem' },
-  { id:'saeed', name:'Dr. Saeed Bapar', title:'Director', signature: 'Saeed Bapar' }
-];
+  // --------------------------------------------------------------------------------
+  // MODIFIED: Custom fees are now defined per student in the newResidents array
+  // --------------------------------------------------------------------------------
+  const newResidents = [
+      { name: 'Awais Mahar', room: '1 SF', fee: 15000 },
+      { name: 'Ali Zaib', room: '1 SF', fee: 15000 },
+      { name: 'M Nawaz Awan', room: '1 SF', fee: 15000 },
+      { name: 'Farooque Rauf', room: '2 SF', fee: 15000 },
+      { name: 'Farooque Bro', room: '2 SF', fee: 15000 },
+      { name: 'Mubeen', room: '2 SF', fee: 15000 },
+      { name: 'Jareer Ahmed', room: '2 SF', fee: 15000 },
+      { name: 'M Abbas', room: '3 SF', fee: 15000 },
+      { name: 'Jawad javeed', room: '3 SF', fee: 15000 },
+      { name: 'Zain Ali', room: '3 SF', fee: 15000 },
+      { name: 'Shan', room: '4 SF', fee: 15000 },
+      { name: 'Sain . Shan', room: '4 SF', fee: 15000 },
+      { name: 'Sajid Ali', room: '1 FF', fee: 15000 },
+      { name: 'Dr. Furqan', room: '3 FF', fee: 15000 },
+      { name: 'Dr. New', room: '3 FF', fee: 15000 },
+      { name: 'Jawad Ali', room: '3 FF', fee: 15000 },
+      { name: 'Ab. Qadir', room: '4 FF', fee: 15000 },
+      { name: 'Basheer Ahmed', room: '4 FF', fee: 15000 },
+      { name: 'Zulfiqar Ali', room: '4 FF', fee: 15000 }
+  ];
+  
+  const studentsList = newResidents.map((student, index) => ({
+      name: student.name,
+      roll: `20K-${(1000 + index).toString()}`, // Dummy Roll Number
+      room: student.room,
+      email: `${student.name.replace(/\s/g, '.').toLowerCase()}@ibh.com`,
+      phone: `0300${(1234560 + index).toString()}`,
+      avatar: DEFAULT_AVATAR_URL,
+      fee: student.fee, // UPDATED: Now uses the custom fee defined above
+      paidDate: new Date(new Date() - index * 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Recent dummy paid date
+  }));
 
-const teamMembers = [
-  {name:'Mr. Faiq Ali', role:'Accountant', img:'https://i.postimg.cc/9FrGkFmn/Gemini-Generated-Image-76whby76whby76wh.png'},
-  {name:'Mr. Ali Faheem', role:'Warden', img:'https://i.postimg.cc/5N6wrN4Z/Gemini-Generated-Image-8sktjf8sktjf8skt.png'},
-  {name:'Dr. Saeed Bapar', role:'Director', img:'https://i.postimg.cc/ZKKf5STf/Gemini-Generated-Image-mctpyfmctpyfmctp.png'},
-  {name:'Israr Sindhi', role:'Developer', img:'https://i.postimg.cc/ThkGgFs4/member.png'}
-];
+  
+  // UPDATED CONTACTS for Management Team
+  const managementTeam = [
+      { name: 'Faiq Ali', role: 'Hostel Administrator', contact: MANAGEMENT_PHONE_WA_DISPLAY + ' (WA)', avatar: 'https://i.postimg.cc/9FrGkFmn/Gemini-Generated-Image-76whby76whby76wh.png' },
+      { name: 'Ali Faheem', role: 'Account Manager', contact: MANAGEMENT_PHONE_WA_DISPLAY + ' (WA)', avatar: 'https://i.postimg.cc/5N6wrN4Z/Gemini-Generated-Image-8sktjf8sktjf8skt.png' },
+      { name: 'Dr. Saeed Bapar', role: 'Maintenance Supervisor', contact: MANAGEMENT_PHONE_WA_DISPLAY + ' (WA)', avatar: 'https://i.postimg.cc/ZKKf5STf/Gemini-Generated-Image-mctpyfmctpyfmctp.png' },
+      { name: 'Israr Ali', role: 'App Developer ', contact: MANAGEMENT_EMAIL, avatar: 'https://i.postimg.cc/qMrRVdx4/Ai-Design-Two-color-black-and-white-stroke-personal-avatar-1757780311.webp' },
+      { name: 'Ali Abdullah', role: 'App Developer', contact: MANAGEMENT_EMAIL, avatar: 'https://img.freepik.com/free-vector/initials-letter-b-logo-design_474888-7381.jpg?semt=ais_hybrid&w=740&q=80' },
+  ];
+  // --------------------------------------------------------------------------------
+  // END MODIFIED SECTION
+  // --------------------------------------------------------------------------------
 
-/* ================== UTIL ================== */
-function formatTime(d){return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});} 
-function maskPhone(phone){ if(!phone) return ''; const clean=phone.replace(/[^0-9+]/g,''); const plus=clean.startsWith('+')?'+':''; let digits=plus?clean.slice(1):clean; if(digits.length<=6) return plus+digits; const first=digits.slice(0,4), last=digits.slice(-3); const midLen=Math.max(3,digits.length-7); return plus+first+'*'.repeat(midLen)+last; }
+  const newMenu = {
+      'Monday': {
+          "Breakfast": "Aaloo Egg + Tea Paratha",
+          "Lunch": "Sabzi",
+          "Dinner": "Dal Chawal"
+      },
+      'Tuesday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Cholle",
+          "Dinner": "Chicken"
+      },
+      'Wednesday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Daleem Chawal",
+          "Dinner": "Fried Aaloo"
+      },
+      'Thursday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Aaloo",
+          "Dinner": "Sabzi"
+      },
+      'Friday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Special Biryani",
+          "Dinner": "Dal Mung"
+      },
+      'Saturday': {
+          "Breakfast": "Aaloo Egg + Tea Paratha",
+          "Lunch": "Chicken Chana Dal",
+          "Dinner": "Aaloo Egg"
+      },
+      'Sunday': {
+          "Breakfast": "Tea & Special Biscuits",
+          "Lunch": "Cholla / Aaloo Biryani",
+          "Dinner": "Chicken"
+      }
+  };
 
-/* ================== MEAL TIME PARSING (robust) ================== */
-function parseRange(rangeStr){ const parts=rangeStr.split('-').map(x=>x.trim()); function p(part){ const m=part.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i); if(m){ let hh=parseInt(m[1],10); const mm=parseInt(m[2],10); const ap=m[3].toUpperCase(); if(ap==='PM'&&hh!==12) hh+=12; if(ap==='AM'&&hh===12) hh=0; const d=new Date(); d.setHours(hh,mm,0,0); return d;} return null;} const s=p(parts[0]); const e=p(parts[1]||parts[0]); if(!s||!e) return [s,e]; if(e<=s) e.setDate(e.getDate()+1); return [s,e]; }
+  const weeklySchedule = Object.keys(newMenu).reduce((acc, day) => {
+      acc[day] = [
+          { name: 'Breakfast', time: MEAL_TIMINGS.Breakfast.start, items: newMenu[day].Breakfast },
+          { name: 'Lunch', time: MEAL_TIMINGS.Lunch.start, items: newMenu[day].Lunch },
+          { name: 'Dinner', time: MEAL_TIMINGS.Dinner.start, items: newMenu[day].Dinner }
+      ];
+      return acc;
+  }, {});
 
-function minutesUntil(date){ return Math.round((date - new Date())/60000); }
 
-function getMealStatus(day){ const now=new Date(); const arr=Object.entries(mealSchedule[day]).map(([name,info])=>{ const [s,e]=parseRange(info.time); return { mealName:name, start:s, end:e, info }; }); const ongoing=arr.find(a=> now>=a.start && now<=a.end); if(ongoing) return { type:'ongoing', meal: ongoing }; const upcoming=arr.filter(a=> a.start>now).sort((a,b)=>a.start-b.start)[0]; if(upcoming) return { type:'upcoming', meal: upcoming }; const tIdx=(Object.keys(mealSchedule).indexOf(day)+1)%7; const nextDay=Object.keys(mealSchedule)[tIdx]; const nextArr=Object.entries(mealSchedule[nextDay]).map(([name,info])=>({ mealName:name, start:parseRange(info.time)[0], end:parseRange(info.time)[1], info })); const next=nextArr.sort((a,b)=>a.start-b.start)[0]; return { type:'nextday', meal: next, day: nextDay }; }
+  /* ========== DOM ELEMENTS (FIXED AND COMPLETE) ========== */
+  const elements = {
+    // Views
+    dashboardView: document.getElementById('view-dashboard'),
+    scheduleView: document.getElementById('view-schedule'),
+    receiptView: document.getElementById('view-receipt'),
+    profileView: document.getElementById('view-profile'),
+    teamView: document.getElementById('view-team'),
+    complaintView: document.getElementById('view-complaint'), // NEW
 
-/* ================== RENDER UI ================== */
-function renderDaySelector(){ const selector=document.getElementById('daySelector'); selector.innerHTML=''; const weekDays=Object.keys(mealSchedule); const todayName=new Date().toLocaleDateString([], { weekday:'long' }); weekDays.forEach(day=>{ const btn=document.createElement('div'); btn.className='day-pill'; btn.textContent=day; btn.dataset.day=day; if(day===todayName) btn.classList.add('active'); btn.addEventListener('click', ()=>{ document.querySelectorAll('.day-pill').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderMealsForDay(day); }); selector.appendChild(btn); }); renderMealsForDay(new Date().toLocaleDateString([], { weekday:'long' })); }
+    // Dashboard
+    welcomeMsg: document.getElementById('welcomeMsg'),
+    todayDate: document.getElementById('todayDate'),
+    clock: document.getElementById('clock'),
+    daySelector: document.getElementById('daySelector'),
+    mealsContainer: document.getElementById('mealsContainer'),
+    mealNotification: document.getElementById('mealNotification'),
+    studentsList: document.getElementById('studentsList'),
+    managementTeamList: document.getElementById('managementTeamList'),
 
-function renderMealsForDay(day){ const container=document.getElementById('mealsContainer'); container.innerHTML=''; const obj=mealSchedule[day]; const status=getMealStatus(day); ['Breakfast','Lunch','Dinner'].forEach(mealName=>{ const info=obj[mealName]; const [s,e]=parseRange(info.time); const card=document.createElement('div'); card.className='meal-card'; let statusBadge=''; if(status.type==='ongoing'&&status.meal.mealName===mealName){ statusBadge='<span class="badge live">LIVE</span>'; } else if(status.type==='upcoming'&&status.meal.mealName===mealName){ statusBadge='<span class="badge next">NEXT</span>'; } card.innerHTML=`<div class="meal-name">${mealName} ${statusBadge}</div><div class="meal-time">${formatTime(s)} - ${formatTime(e)}</div><div class="meal-items">${info.item}</div>`; container.appendChild(card); }); updateMealNotification(day); }
+    // Navigation
+    navItems: document.querySelectorAll('.bottom-nav .nav-item'),
+    themeToggle: document.getElementById('themeToggle'),
+    headerProfile: document.getElementById('headerProfile'),
+    headerAvatar: document.getElementById('headerAvatar'),
 
-function updateMealNotification(day){ const status=getMealStatus(day); const notification=document.getElementById('mealNotification'); let icon='🍽️', iconClass='info', title='', text=''; if(status.type==='ongoing'){ icon='✅'; title=`${status.meal.mealName} is being served now`; text=`${formatTime(status.meal.start)} - ${formatTime(status.meal.end)} • ${status.meal.info.item}`; } else if(status.type==='upcoming'){ const mins=minutesUntil(status.meal.start); icon='⏰'; title=`${status.meal.mealName} starts in ${mins} minute${Math.abs(mins)!==1?'s':''}`; text=status.meal.info.item; } else { const mins=minutesUntil(status.meal.start); icon='📅'; title=`Next: ${status.meal.mealName} (${status.day})`; text=`Starts in ${Math.max(0,mins)} minutes • ${status.meal.info.item}`; } notification.innerHTML=`<div class="info-icon">${icon}</div><div class="info-content"><div class="title">${title}</div><div class="text">${text}</div></div>`; }
+    // Schedule
+    weekTabs: document.getElementById('weekTabs'),
+    scheduleDetails: document.getElementById('scheduleDetails'),
 
-function renderStudentsList(){ const list=document.getElementById('studentsList'); list.innerHTML=''; studentsData.forEach(s=>{ const item=document.createElement('div'); item.className='student-item'; item.innerHTML=`<div><div style="font-weight:800">${s.name}</div><div class="muted">${s.rollNumber}</div></div><div class="muted">${maskPhone(s.phone)}</div>`; list.appendChild(item); }); }
+    // Receipt
+    searchName: document.getElementById('searchName'),
+    searchBtn: document.getElementById('searchBtn'),
+    searchResult: document.getElementById('searchResult'),
+    receiptPreviewContainer: document.getElementById('receiptPreviewContainer'),
+    receiptForPdf: document.getElementById('receiptForPdf'),
 
-function renderTeam(){ const grid=document.getElementById('teamGrid'); grid.innerHTML=''; teamMembers.forEach(m=>{ const card=document.createElement('div'); card.className='team-card'; card.innerHTML=`<img src="${m.img}" alt="${m.name}"><div><div style="font-weight:800">${m.name}</div><div class="muted">${m.role}</div></div>`; grid.appendChild(card); }); }
+    // Profile
+    profileNameTitle: document.getElementById('profileNameTitle'),
+    profileSmall: document.getElementById('profileSmall'),
+    profileAvatar: document.getElementById('profileAvatar'),
+    pName: document.getElementById('pName'),
+    pRoll: document.getElementById('pRoll'),
+    pEmail: document.getElementById('pEmail'),
+    pPhone: document.getElementById('pPhone'),
+    pRoom: document.getElementById('pRoom'),
+    pAvatarFile: document.getElementById('pAvatarFile'),
+    saveProfile: document.getElementById('saveProfile'),
+    emailProfile: document.getElementById('emailProfile'),
+    viewRulesBtn: document.getElementById('viewRulesBtn'),
+    profileMsg: document.getElementById('profileMsg'),
 
-/* ================== PROFILE & DROPDOWN ================== */
-const profileBtn=document.getElementById('profileBtn'); const profileDropdown=document.getElementById('profileDropdown'); profileBtn.addEventListener('click', (e)=>{ profileDropdown.classList.toggle('show'); });
+    // Complaint (NEW)
+    complaintSubject: document.getElementById('complaintSubject'),
+    complaintBody: document.getElementById('complaintBody'),
+    sendEmailBtn: document.getElementById('sendEmailBtn'),
+    sendWhatsappBtn: document.getElementById('sendWhatsappBtn'),
+    complaintMsg: document.getElementById('complaintMsg'),
 
-// Close dropdown on outside click
-window.addEventListener('click', (e)=>{ if(!profileBtn.contains(e.target)) profileDropdown.classList.remove('show'); });
 
-function openModal(html){ document.getElementById('modalContent').innerHTML=html; document.getElementById('modalBackdrop').classList.add('show'); }
-function closeModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
+    // Modals
+    signupModal: document.getElementById('signupModal'),
+    rulesModal: document.getElementById('rulesModal'),
+    sName: document.getElementById('sName'),
+    sRoll: document.getElementById('sRoll'),
+    sEmail: document.getElementById('sEmail'),
+    sPhone: document.getElementById('sPhone'),
+    sRoom: document.getElementById('sRoom'),
+    acceptTerms: document.getElementById('acceptTerms'),
+    openRulesFromSignup: document.getElementById('openRulesFromSignup'),
+    createProfileBtn: document.getElementById('createProfileBtn'),
+    signupCancel: document.getElementById('signupCancel'),
+    closeRules: document.getElementById('closeRules'),
+    signupMsg: document.getElementById('signupMsg'),
+  };
 
-/* ========== Edit Profile Modal ========== */
-function showEditProfile(){ const saved=JSON.parse(localStorage.getItem('hostel_profile')||'{}'); openModal(`
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-weight:800">Edit Profile</div><button id=closeModalBtn class='btn'>✖</button></div>
-  <label>Full Name</label><input id='mName' value='${saved.name||''}' />
-  <label>Roll Number</label><input id='mRoll' value='${saved.roll||''}' />
-  <label>Email</label><input id='mEmail' value='${saved.email||''}' />
-  <label>Phone</label><input id='mPhone' value='${saved.phone||''}' />
-  <label>Room</label><input id='mRoom' value='${saved.room||''}' />
-  <div style="display:flex;gap:8px;margin-top:12px"><button class='btn primary' id='saveProfileModal'>Save</button><button class='btn' id='cancelProfileModal'>Cancel</button></div>
-`);
+  /* ========== UTILITY FUNCTIONS ========== */
 
-document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-document.getElementById('cancelProfileModal').addEventListener('click', closeModal);
+  function saveState() {
+    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    localStorage.setItem('currentTheme', currentTheme);
+  }
 
-document.getElementById('saveProfileModal').addEventListener('click', ()=>{
-  const profile={ name: document.getElementById('mName').value.trim(), roll: document.getElementById('mRoll').value.trim(), email: document.getElementById('mEmail').value.trim(), phone: document.getElementById('mPhone').value.trim(), room: document.getElementById('mRoom').value.trim(), avatar: document.getElementById('profileLargeImg').src };
-  if(!profile.name){ alert('Name required'); return; }
-  localStorage.setItem('hostel_profile', JSON.stringify(profile)); applyProfile(); closeModal();
-});
-}
+  function loadState() {
+    const profile = localStorage.getItem('userProfile');
+    const theme = localStorage.getItem('currentTheme');
+    if (profile) userProfile = JSON.parse(profile);
+    if (theme) currentTheme = theme;
 
-function applyProfile(){ const saved=JSON.parse(localStorage.getItem('hostel_profile')||'{}'); if(saved.name) document.getElementById('profileName').textContent=saved.name; if(saved.room) document.getElementById('profileRole').textContent=`Hostel Resident • Room ${saved.room}`; if(saved.avatar){ document.getElementById('profileLargeImg').src=saved.avatar; document.getElementById('headerAvatar').src=saved.avatar; }}
+    // Simulate finding the user in the students list on load
+    if (userProfile && !userProfile.found) {
+        const foundStudent = studentsList.find(s => s.roll === userProfile.roll);
+        if (foundStudent) {
+            userProfile = {...userProfile, ...foundStudent, found: true};
+            saveState();
+        } else {
+            // If user's data is outdated or roll number not found, revert to only local state
+        }
+    } else if (userProfile && userProfile.found) {
+        // If already found, update with dummy data just in case it was refreshed (in a real app, this would be an API call)
+        const updatedStudent = studentsList.find(s => s.roll === userProfile.roll);
+        if (updatedStudent) {
+            userProfile = {...userProfile, ...updatedStudent};
+            saveState();
+        }
+    }
+  }
 
-/* ========== SEARCH & RECEIPT ========== */
-document.getElementById('searchBtn').addEventListener('click', ()=>{ const q=document.getElementById('searchName').value.trim().toLowerCase(); const res=document.getElementById('searchResult'); const preview=document.getElementById('receiptPreviewContainer'); preview.innerHTML=''; if(!q){ res.innerHTML='<div class="muted">Please enter a search term</div>'; return; } const student=studentsData.find(s=> s.name.toLowerCase().includes(q) || s.rollNumber.toLowerCase().includes(q)); if(student){ res.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div style="font-weight:800">${student.name}</div><div class="muted">${student.rollNumber}</div></div>`; renderReceiptPreview(student); } else { res.innerHTML='<div class="muted">Student not found</div>'; } });
+  function showToast(message, type = 'info', duration = 3000) {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) existingToast.remove();
 
-function renderReceiptPreview(student){ const container=document.getElementById('receiptPreviewContainer'); container.innerHTML=`
-  <div class="receipt-preview">
-    <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:800">Receipt Preview</div><div class='muted'>${student.name} • ${student.rollNumber}</div></div><div><button class='btn' id='editReceiptBtn'>Edit</button><button class='btn primary' id='downloadPdfBtn'>Download PDF</button></div></div>
-    <div style="margin-top:12px">
-      <div class="receipt-row"><div class="muted">Student</div><div style="font-weight:800">${student.name}</div></div>
-      <div class="receipt-row"><div class="muted">Roll</div><div style="font-weight:800">${student.rollNumber}</div></div>
-      <div class="receipt-row"><div class="muted">Phone</div><div>${student.phone}</div></div>
-      <div class="receipt-row"><div class="muted">Amount</div><div style="font-weight:800">${student.feePaid} PKR</div></div>
-      <div style="margin-top:12px">
-        <label class='muted'>Paid To</label>
-        <select id='paidToSelect' style='margin-top:6px'>${paidToStaff.map(p=>`<option value="${p.id}">${p.name} (${p.title})</option>`).join('')}</select>
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Animate the toast in (small delay to ensure it renders before transition)
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 10);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.addEventListener('transitionend', () => toast.remove());
+    }, duration);
+  }
+
+  function validateEmail(email) {
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-1]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  }
+
+  function validatePhone(phone) {
+    // Simple check for 7 to 15 digits
+    const re = /^\d{7,15}$/;
+    return re.test(String(phone).replace(/\s|-/g, ''));
+  }
+
+  /* ========== APP LOGIC ========== */
+
+  function initTheme() {
+    loadState();
+    if (currentTheme === 'dark') {
+      document.body.classList.add('dark');
+      elements.themeToggle.textContent = '☀️';
+    } else {
+      document.body.classList.remove('dark');
+      elements.themeToggle.textContent = '🌙';
+    }
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+
+    elements.clock.textContent = timeString;
+    elements.todayDate.textContent = dateString;
+
+    const hour = now.getHours();
+    let greeting = 'Good Evening';
+    if (hour < 12) greeting = 'Good Morning';
+    else if (hour < 17) greeting = 'Good Afternoon';
+
+    elements.welcomeMsg.textContent = `${greeting}, ${userProfile ? userProfile.name.split(' ')[0] : 'Resident'}!`;
+  }
+
+  function switchView(viewId) {
+    const views = {
+      dashboard: elements.dashboardView,
+      schedule: elements.scheduleView,
+      receipt: elements.receiptView,
+      profile: elements.profileView,
+      team: elements.teamView,
+      complaint: elements.complaintView, // NEW VIEW
+    };
+
+    // Hide all views
+    Object.values(views).forEach(v => v.classList.add('hidden'));
+
+    // Show selected view
+    if (views[viewId]) {
+      views[viewId].classList.remove('hidden');
+      currentView = viewId;
+    }
+
+    // Update nav active state
+    elements.navItems.forEach(item => {
+      item.classList.toggle('active', item.dataset.view === viewId);
+    });
+
+    // Special view rendering
+    if (viewId === 'dashboard') {
+      renderDashboard();
+    } else if (viewId === 'schedule') {
+      renderScheduleView();
+    } else if (viewId === 'profile') {
+      renderProfileView();
+    } else if (viewId === 'team') {
+        renderTeamView();
+    }
+  }
+
+  /* ========== DASHBOARD RENDERERS ========== */
+
+  function renderDashboard() {
+    const days = Object.keys(weeklySchedule);
+    const todayIndex = new Date().getDay() - 1; // 0=Mon, 6=Sun
+    const today = days[todayIndex < 0 ? 6 : todayIndex];
+
+    // 1. Render Day Selector
+    elements.daySelector.innerHTML = days.map(day =>
+      `<button class="day-btn ${day === today ? 'active' : ''}" data-day="${day}">${day}</button>`
+    ).join('');
+
+    // 2. Render Meals for Today (or selected day)
+    renderMeals(today);
+
+    // 3. Add event listeners for day change
+    elements.daySelector.querySelectorAll('.day-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        elements.daySelector.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        renderMeals(e.currentTarget.dataset.day);
+      });
+    });
+
+    // 4. Update welcome message
+    updateClock();
+  }
+
+  // NEW HELPER: Convert AM/PM time string to minutes from midnight
+  function timeToMinutes(timeStr) {
+      const [time, period] = timeStr.split(' ');
+      let [hour, minute] = time.split(':').map(Number);
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0; // Midnight (12:xx AM)
+      return hour * 60 + minute;
+  }
+
+  // NEW HELPER: Checks if current time is within the defined meal time range
+  function isMealLive(mealName) {
+      const timings = MEAL_TIMINGS[mealName];
+      if (!timings) return false;
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const startMinutes = timeToMinutes(timings.start);
+      const endMinutes = timeToMinutes(timings.end);
+
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+
+  function renderMeals(day) {
+    const meals = weeklySchedule[day] || [];
+    elements.mealsContainer.innerHTML = meals.map(meal => {
+      
+      const isLive = isMealLive(meal.name);
+      let statusText = isLive ? 'LIVE' : 'Upcoming';
+      
+      const timeRange = MEAL_TIMINGS[meal.name].start === MEAL_TIMINGS[meal.name].end
+          ? MEAL_TIMINGS[meal.name].start
+          : `${MEAL_TIMINGS[meal.name].start} - ${MEAL_TIMINGS[meal.name].end}`;
+
+
+      return `
+        <div class="meal-card ${isLive ? 'active' : ''}">
+          <div class="meal-header">
+            <div class="meal-name">${meal.name}</div>
+            <div class="meal-status status-${isLive ? 'live' : 'next'}">${statusText}</div>
+          </div>
+          <div class="meal-time">Time: ${timeRange}</div>
+          <div class="meal-items">${meal.items}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Add general notification/tip
+    elements.mealNotification.innerHTML = `
+      <div class="info-icon info">🍽️</div>
+      <div class="info-content">
+        <div class="info-title">Today's Menu</div>
+        <div class="info-text">Please check the schedule for next week's menu variations.</div>
       </div>
-      <div style="margin-top:8px"><label class='muted'>Date Paid</label><input id='datePaidInput' value='${student.datePaid}' /></div>
-    </div>
-  </div>
-`;
+    `;
+  }
 
-  document.getElementById('downloadPdfBtn').addEventListener('click', ()=>{
-    const paidToId=document.getElementById('paidToSelect').value; const datePaid=document.getElementById('datePaidInput').value; generatePDF(student, paidToId, datePaid);
+  function renderResidentsList() {
+    elements.studentsList.innerHTML = studentsList.map(student => `
+      <div class="student-item">
+        <div class="student-item-info">
+            <img src="${student.avatar}" alt="${student.name}" class="student-avatar" />
+            <div>
+              <div class="student-name">${student.name}</div>
+              <div class="student-roll">Roll No: ${student.roll} - Room: ${student.room}</div>
+            </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Render Hostel Management and Developer
+  function renderManagementTeam() {
+    elements.managementTeamList.innerHTML = managementTeam.map(member => `
+        <div class="student-item">
+            <div class="student-item-info">
+                <img src="${member.avatar}" alt="${member.name}" class="student-avatar" />
+                <div>
+                  <div class="student-name">${member.name}</div>
+                  <div class="student-roll">${member.role} | Contact: ${member.contact}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+  }
+
+  // Team View renderer
+  function renderTeamView() {
+      renderManagementTeam();
+      renderResidentsList();
+  }
+
+  /* ========== SCHEDULE RENDERERS ========== */
+
+  function renderScheduleView() {
+    const days = Object.keys(weeklySchedule);
+    const todayIndex = new Date().getDay() - 1; // 0=Mon, 6=Sun
+    const today = days[todayIndex < 0 ? 6 : todayIndex];
+    
+    // 1. Render Tabs
+    elements.weekTabs.innerHTML = days.map(day => 
+      `<button class="schedule-tab ${day === today ? 'active' : ''}" data-day="${day}">${day}</button>`
+    ).join('');
+
+    // 2. Render Details for Today
+    renderScheduleDetails(today);
+
+    // 3. Add event listeners for tabs
+    elements.weekTabs.querySelectorAll('.schedule-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        elements.weekTabs.querySelectorAll('.schedule-tab').forEach(t => t.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        renderScheduleDetails(e.currentTarget.dataset.day);
+      });
+    });
+  }
+
+  function renderScheduleDetails(day) {
+    const meals = weeklySchedule[day] || [];
+    elements.scheduleDetails.innerHTML = meals.map(meal => `
+      <div class="card">
+        <div class="card-title">${meal.name}</div>
+        <div class="card-subtitle">${MEAL_TIMINGS[meal.name].start} - ${MEAL_TIMINGS[meal.name].end}</div>
+        <div style="margin-top:8px;font-size:14px;color:var(--text-secondary);">
+          ${meal.items}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ========== PROFILE RENDERERS/HANDLERS ========== */
+
+  function renderProfileView() {
+    if (userProfile) {
+      elements.pName.value = userProfile.name || '';
+      elements.pRoll.value = userProfile.roll || '';
+      elements.pEmail.value = userProfile.email || '';
+      elements.pPhone.value = userProfile.phone || '';
+      elements.pRoom.value = userProfile.room || '';
+
+      elements.profileNameTitle.textContent = userProfile.name || 'Guest User';
+      elements.profileSmall.textContent = `Roll: ${userProfile.roll || 'N/A'} | Room: ${userProfile.room || 'N/A'}`;
+      elements.profileAvatar.src = userProfile.avatar || DEFAULT_AVATAR_URL;
+      elements.headerAvatar.src = userProfile.avatar || DEFAULT_AVATAR_URL;
+
+      elements.profileMsg.textContent = 'Last saved details.';
+    }
+  }
+
+  function handleProfileSave() {
+    const name = elements.pName.value.trim();
+    const roll = elements.pRoll.value.trim();
+    const email = elements.pEmail.value.trim();
+    const phone = elements.pPhone.value.trim();
+    const room = elements.pRoom.value.trim();
+
+    if (!name || !roll || !email || !phone || !room) {
+      elements.profileMsg.textContent = 'All fields are required.';
+      elements.profileMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      elements.profileMsg.textContent = 'Please enter a valid email address.';
+      elements.profileMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validatePhone(phone)) {
+      elements.profileMsg.textContent = 'Please enter a valid phone number.';
+      elements.profileMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    // Update userProfile (or create a new one if null)
+    userProfile = {
+      ...(userProfile || {}),
+      name,
+      roll,
+      email,
+      phone,
+      room,
+      avatar: userProfile ? userProfile.avatar : DEFAULT_AVATAR_URL, // Keep old avatar or use default
+      found: userProfile ? userProfile.found : false,
+      fee: userProfile ? userProfile.fee : 'N/A',
+      paidDate: userProfile ? userProfile.paidDate : 'N/A'
+    };
+    saveState();
+    renderProfileView();
+    showToast('Profile saved successfully!', 'success');
+    elements.profileMsg.style.color = 'var(--success)';
+    elements.profileMsg.textContent = 'Profile saved locally.';
+  }
+
+  function handleSignup() {
+    const name = elements.sName.value.trim();
+    const roll = elements.sRoll.value.trim();
+    const email = elements.sEmail.value.trim();
+    const phone = elements.sPhone.value.trim();
+    const room = elements.sRoom.value.trim();
+    const accepted = elements.acceptTerms.checked;
+
+    if (!name || !roll || !email || !phone || !room) {
+      elements.signupMsg.textContent = 'All fields are required.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      elements.signupMsg.textContent = 'Invalid email format.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validatePhone(phone)) {
+      elements.signupMsg.textContent = 'Invalid phone number format.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!accepted) {
+      elements.signupMsg.textContent = 'You must accept the terms & rules.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    // Check if user is in dummy list (simulating admin approval)
+    const foundStudent = studentsList.find(s => s.roll === roll);
+
+    userProfile = {
+      name,
+      roll,
+      email,
+      phone,
+      room,
+      avatar: DEFAULT_AVATAR_URL, // Default avatar
+      found: !!foundStudent, // Track if they are a real/approved student
+      fee: foundStudent ? foundStudent.fee : 'N/A', // CORRECTLY USES FOUND STUDENT FEE
+      paidDate: foundStudent ? foundStudent.paidDate : 'N/A'
+    };
+
+    saveState();
+    renderProfileView();
+    toggleModal('signupModal', false);
+    switchView('dashboard');
+    showToast(`Welcome, ${name.split(' ')[0]}! Profile created.`, 'success');
+  }
+
+  /* ========== RECEIPT LOGIC ========== */
+
+  function searchStudent() {
+    const query = elements.searchName.value.trim().toLowerCase();
+    if (query.length < 2) {
+      elements.searchResult.innerHTML = '';
+      elements.receiptPreviewContainer.innerHTML = '';
+      return;
+    }
+
+    const filteredStudents = studentsList.filter(s =>
+      s.name.toLowerCase().includes(query) || s.roll.toLowerCase().includes(query)
+    );
+
+    elements.searchResult.innerHTML = filteredStudents.length > 0 ?
+      `
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-subtitle">${filteredStudents.length} result(s) found. Tap a student to generate receipt.</div>
+      </div>
+      ` :
+      `<div class="card" style="text-align:center;">No students found matching "${query}"</div>`;
+
+    if (filteredStudents.length > 0) {
+      const listHtml = filteredStudents.map(student => `
+        <div class="student-item" data-roll="${student.roll}" role="button" tabindex="0">
+          <div>
+            <div class="student-name">${student.name}</div>
+            <div class="student-roll">Roll: ${student.roll} | Room: ${student.room}</div>
+          </div>
+          <button class="btn btn-primary btn-sm generate-receipt-btn">Generate</button>
+        </div>
+      `).join('');
+
+      const studentListCard = document.createElement('div');
+      studentListCard.className = 'card';
+      studentListCard.innerHTML = listHtml;
+      elements.searchResult.appendChild(studentListCard);
+
+      // Add click listeners to the dynamically generated buttons
+      studentListCard.querySelectorAll('.generate-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const roll = e.currentTarget.closest('.student-item').dataset.roll;
+          const student = studentsList.find(s => s.roll === roll);
+          if (student) {
+            renderReceiptPreview(student);
+          }
+        });
+      });
+    }
+  }
+
+  function renderReceiptPreview(student) {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const paidDate = student.paidDate ? new Date(student.paidDate).toLocaleDateString() : 'N/A';
+    const amount = student.fee ? student.fee.toLocaleString() : 'N/A';
+    const receiptNo = `IBH-${Math.floor(Math.random() * 90000) + 10000}`;
+    
+    // Function to convert number to words (Simplified for example)
+    function numberToWords(n) {
+        if (n === 'N/A') return 'Amount Not Available';
+        const num = Number(n);
+        // Removed hardcoded 50000 check. Uses custom amount for display.
+        return `Rupees ${num.toLocaleString()} Only`;
+    }
+
+    elements.receiptPreviewContainer.innerHTML = `
+      <div class="receipt-preview">
+        <div class="receipt-header">
+          <img src="${HOSTEL_LOGO_URL}" alt="Hostel Logo" class="receipt-logo" />
+          <div class="receipt-info">
+            <div class="card-title">Fee Receipt</div>
+            <div class="card-subtitle" style="margin-top:0;">Receipt No: ${receiptNo}</div>
+          </div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Student Name</div>
+          <div class="receipt-value">${student.name}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Roll Number</div>
+          <div class="receipt-value">${student.roll}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Room Number</div>
+          <div class="receipt-value">${student.room}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Amount Received (PKR)</div>
+          <div class="receipt-value">PKR ${amount}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Paid For</div>
+          <div class="receipt-value">Monthly Hostel Fee</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Date of Payment</div>
+          <div class="receipt-value">${paidDate}</div>
+        </div>
+        <div class="receipt-row" style="border-bottom:none;">
+          <div class="receipt-label">Date of Generation</div>
+          <div class="receipt-value">${today}</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="downloadReceiptBtn" style="margin-top:16px;">⬇️ Download Receipt (PDF)</button>
+    `;
+
+    // Add event listener to the newly rendered download button
+    document.getElementById('downloadReceiptBtn').addEventListener('click', () => downloadReceipt(student));
+  }
+
+  function renderReceiptForPdf(student) {
+    const paidDate = student.paidDate ? new Date(student.paidDate).toLocaleDateString() : 'N/A';
+    const amount = student.fee ? student.fee.toLocaleString() : 'N/A';
+    const receiptNo = `IBH-${Math.floor(Math.random() * 90000) + 10000}`;
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    function numberToWords(n) {
+        if (n === 'N/A') return 'Amount Not Available';
+        const num = Number(n);
+        // Removed hardcoded 50000 check. Uses custom amount for display.
+        return `Rupees ${num.toLocaleString()} Only`;
+    }
+    
+    // Pre-load the images so they have CORS attributes applied for html2canvas
+    const logoImg = new Image();
+    logoImg.src = HOSTEL_LOGO_URL;
+    logoImg.crossOrigin = 'Anonymous'; // CRITICAL: Allows canvas to read the image data
+
+    const sigImg = new Image();
+    sigImg.src = ADMIN_SIGNATURE_URL;
+    sigImg.crossOrigin = 'Anonymous'; // CRITICAL: Allows canvas to read the image data
+
+
+    elements.receiptForPdf.innerHTML = `
+      <div class="pdf-header">
+        <div style="display: flex; align-items: center;">
+            <img src="${HOSTEL_LOGO_URL}" alt="Hostel Logo" class="pdf-logo" crossorigin="anonymous" />
+            <div class="pdf-company-info">
+                <div class="title">The Indus Boys Hostel Services, Sukkur</div>
+                <div class="subtitle">Resident Fee Receipt</div>
+            </div>
+        </div>
+        <div class="pdf-receipt-meta">
+            <div><strong>Receipt No:</strong> ${receiptNo}</div>
+            <div><strong>Date:</strong> ${today}</div>
+        </div>
+      </div>
+
+      <div class="pdf-section-title">Recipient Details</div>
+      <div class="pdf-details-grid">
+          <div class="pdf-detail-item">
+              <div>Student Name</div>
+              <strong>${student.name}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Roll Number</div>
+              <strong>${student.roll}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Room Number</div>
+              <strong>${student.room}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Contact Phone</div>
+              <strong>${student.phone || 'N/A'}</strong>
+          </div>
+      </div>
+
+      <div class="pdf-section-title">Payment Summary</div>
+      <div class="pdf-details-grid">
+          <div class="pdf-detail-item">
+              <div>Fee Type</div>
+              <strong>Monthly Hostel Fee</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Amount Paid (PKR)</div>
+              <strong style="font-size: 16px;">PKR ${amount}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Payment Date</div>
+              <strong>${paidDate}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Payment Method</div>
+              <strong>Bank Transfer/Cash</strong>
+          </div>
+      </div>
+      <div class="pdf-amount-words">
+          Amount in Words: ${numberToWords(student.fee)}
+      </div>
+
+      <div class="pdf-section-title">Note</div>
+      <div class="pdf-details-grid">
+        <div class="pdf-detail-item" style="grid-column: 1 / -1;">
+            <div>This receipt confirms the payment for the current month's hostel fee. Please retain for your records.</div>
+        </div>
+      </div>
+
+      <div class="pdf-signature-section">
+          <div class="pdf-signature-box">
+              <img src="${ADMIN_SIGNATURE_URL}" alt="Authorized Signature" class="signature-image" crossorigin="anonymous" />
+              <div class="pdf-signature-name">Accounts Department</div>
+              <div class="pdf-signature-title">Authorized Signature</div>
+          </div>
+          <div class="pdf-notes">
+              <strong>Hostel Address:</strong>
+              Banglow #88, 10 Feet Road, Sukkur<br>
+              Contact: ${MANAGEMENT_PHONE_WA_DISPLAY} (WA)<br>
+              Email: ${MANAGEMENT_EMAIL}
+          </div>
+      </div>
+      <div class="pdf-footer">
+          Thank you for being a resident at The Indus Boys Hostel Services, Sukkur.
+      </div>
+    `;
+
+    // Show the hidden div temporarily for capture
+    elements.receiptForPdf.style.left = '0';
+    elements.receiptForPdf.style.top = '0';
+    elements.receiptForPdf.style.position = 'absolute';
+  }
+
+
+  async function downloadReceipt(student) {
+    showToast(`Generating receipt for ${student.name}...`, 'info');
+
+    // 1. Prepare data for PDF
+    renderReceiptForPdf(student); // Function to fill the hidden div and make it visible
+
+    // 2. Capture the hidden content
+    const input = elements.receiptForPdf;
+
+    try {
+      // CRITICAL UPDATE: Set useCORS: true in html2canvas options
+      const canvas = await html2canvas(input, { 
+          scale: 2,
+          useCORS: true 
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      // FIXED: Correctly access jsPDF from the UMD global window object
+      const { jsPDF } = window.jspdf; 
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 210; // A4 width in mm
+      const imgProps = pdf.getImageProperties(imgData);
+      
+      // Calculate image height based on the ratio to fit pdfWidth (210mm)
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // Add image (canvas output) to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`receipt-${student.roll}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+
+      showToast('Receipt downloaded successfully!', 'success');
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      showToast('Error generating receipt. See console for details. Ensure image host allows CORS.', 'danger');
+    } finally {
+      // Hide the temporary PDF content again whether successful or not
+      elements.receiptForPdf.style.left = '-9999px';
+      elements.receiptForPdf.style.top = '-9999px';
+      elements.receiptForPdf.style.position = 'fixed';
+    }
+  }
+
+  /* ========== COMPLAINT LOGIC (NEW) ========== */
+
+  function handleComplaintSubmit(type) {
+    const subject = elements.complaintSubject.value.trim();
+    const body = elements.complaintBody.value.trim();
+    const msg = elements.complaintMsg;
+
+    if (!subject || !body) {
+        msg.textContent = 'Please fill out both the subject and the detailed message.';
+        msg.style.color = 'var(--danger)';
+        return;
+    }
+
+    const userDetails = userProfile && userProfile.name ? 
+        `\n\n--- Resident Details ---\nName: ${userProfile.name}\nRoll: ${userProfile.roll}\nRoom: ${userProfile.room}\nEmail: ${userProfile.email}\nPhone: ${userProfile.phone}` : 
+        '\n\n--- Resident Details ---\n(Guest/Unsaved Profile)';
+
+    // Encoding subject and body separately
+    const fullSubject = encodeURIComponent(`COMPLAINT: ${subject}`);
+    const fullBody = encodeURIComponent(`${body}${userDetails}`);
+    
+    // Clear message before processing
+    msg.textContent = '';
+
+    if (type === 'email') {
+        // Use MANAGEMENT_EMAIL
+        const mailtoLink = `mailto:${MANAGEMENT_EMAIL}?subject=${fullSubject}&body=${fullBody}`;
+        window.open(mailtoLink, '_blank');
+        showToast('Opening email client...', 'info');
+    } else if (type === 'whatsapp') {
+        // Use MANAGEMENT_PHONE_WA (+92 format) and combine subject and body for text
+        const whatsappText = encodeURIComponent(`*${subject}*\n\n${body}${userDetails}`);
+        const whatsappLink = `https://wa.me/${MANAGEMENT_PHONE_WA}?text=${whatsappText}`;
+        window.open(whatsappLink, '_blank');
+        showToast('Opening WhatsApp in a new window...', 'success');
+    }
+
+    // Reset form fields after submission attempt
+    elements.complaintSubject.value = '';
+    elements.complaintBody.value = '';
+    
+    // Display confirmation message temporarily
+    msg.textContent = 'Message template prepared! Check the new window/app.';
+    msg.style.color = 'var(--success)';
+    setTimeout(() => msg.textContent = '', 5000);
+  }
+
+
+  /* ========== EVENT LISTENERS ========== */
+
+  elements.themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
+    elements.themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    saveState();
   });
-}
 
-/* ========== PDF GENERATION (html2pdf) ========== */
-function generatePDF(student, paidToId, datePaid){ const paidTo = paidToStaff.find(p=>p.id===paidToId) || paidToStaff[0]; const invoiceNo = 'IBH-' + Date.now().toString(36).slice(-6).toUpperCase(); const receiptEl = document.getElementById('receiptForPdf'); receiptEl.style.display='block'; receiptEl.innerHTML = `
-  <div class='pdf-header'>
-    <div class='pdf-brand'><div class='logo'>IBH</div><div><div class='pdf-title'>Indus Boys Hostel</div><div class='pdf-meta'>Fee Receipt</div></div></div>
-    <div style='text-align:right'><div style='font-weight:800'>${invoiceNo}</div><div class='pdf-meta'>Date: ${datePaid}</div></div>
-  </div>
-  <div class='pdf-body'>
-    <table class='pdf-table'>
-      <tr><td>Student Name</td><td>${student.name}</td></tr>
-      <tr><td>Roll Number</td><td>${student.rollNumber}</td></tr>
-      <tr><td>Phone</td><td>${student.phone}</td></tr>
-      <tr><td>Amount (PKR)</td><td>${student.feePaid}</td></tr>
-      <tr><td>Amount (Words)</td><td>${numberToWords(student.feePaid)} Rupees Only</td></tr>
-      <tr><td>Paid To</td><td>${paidTo.name} (${paidTo.title})</td></tr>
-    </table>
-    <div class='pdf-footer'>
-      <div><div class='muted'>Prepared by</div><div style='font-weight:800'>Indus Boys Hostel</div></div>
-      <div style='text-align:right'><div class='muted'>Signature</div><div class='signature'>${paidTo.signature}</div></div>
-    </div>
-  </div>
-`;
-
-  // options for html2pdf
-  const opt = { margin:0.4, filename:`${student.rollNumber}-${invoiceNo}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2, useCORS:true}, jsPDF:{unit:'in',format:'letter',orientation:'portrait'}};
-  html2pdf().set(opt).from(receiptEl).save().then(()=>{ receiptEl.style.display='none'; }).catch(err=>{ console.error(err); receiptEl.style.display='none'; }); }
-
-/* ================== UTILS: words & receipt id ================== */
-function numberToWords(num){ if(isNaN(num)||num===0) return 'Zero'; const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']; const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']; function words(n){ if(n<20) return a[n]; if(n<100) return b[Math.floor(n/10)] + (n%10? ' ' + a[n%10] : ''); if(n<1000) return a[Math.floor(n/100)] + ' Hundred' + (n%100? ' ' + words(n%100) : ''); if(n<1000000) return words(Math.floor(n/1000)) + ' Thousand' + (n%1000? ' ' + words(n%1000) : ''); return words(Math.floor(n/1000000)) + ' Million' + (n%1000000? ' ' + words(n%1000000) : ''); } return words(num); }
-
-/* ================== ONE SIGNAL SETUP ================== */
-function initOneSignal(){ if(!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID==='YOUR_ONESIGNAL_APP_ID'){ console.warn('OneSignal App ID not set. Push will not initialize.'); return; }
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: ONESIGNAL_APP_ID,
-      notifyButton: { enable: false },
-      welcomeNotification: {"title":"Welcome","message":"Thanks for enabling notifications from Indus Boys Hostel"}
+  // Navigation Click Handlers
+  elements.navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const view = item.dataset.view;
+      if (view) {
+        switchView(view);
+      }
     });
-
-    // optional: show native prompt to subscribe
-    document.getElementById('notifySubscribe').addEventListener('click', ()=>{
-      OneSignal.showNativePrompt();
-    });
-
-    // Listen for subscription change
-    OneSignal.on('subscriptionChange', function(isSubscribed) {
-      console.log('OneSignal subscription changed:', isSubscribed);
-      if(isSubscribed) showToast('Push notifications enabled'); else showToast('Push notifications disabled');
-    });
-
-    // Example: send a local notification when meal status changes while page open
-    // (Server side should send scheduled notifications for closed/terminated app.)
   });
-}
+  
+  // Profile Handlers
+  elements.saveProfile.addEventListener('click', handleProfileSave);
 
-/* ================== SCHEDULER: push when meal starts (requires server for closed app) ================== */
-// NOTE: For notifications while app is closed you MUST configure OneSignal dashboard REST API or use server SDK to schedule/push notifications.
-// The following client code demonstrates local detection while page is open and will show an in-browser notification via OneSignal (if allowed).
-let lastNotified = null;
-function checkAndNotify(){ const today = new Date().toLocaleDateString([], { weekday: 'long'}); const status = getMealStatus(today); if(status && status.type==='ongoing'){ const key = `${today}-${status.meal.mealName}`; if(lastNotified!==key){ lastNotified=key; // show in-app toast
-    showToast(`${status.meal.mealName} is being served now`);
-    // trigger OneSignal notification (requires permission and OneSignal init)
-    if(window.OneSignal){ OneSignal.push(function(){ OneSignal.isPushNotificationsEnabled().then(function(enabled){ if(enabled){ OneSignal.sendSelfNotification(
-        'Meal Started',
-        `${status.meal.mealName} • ${status.meal.info.item}`,
-        'https://indusboyshostel.example/meal',
-        {data:{meal:status.meal.mealName}},
-        {buttons:[{id:'open',text:'View'}]}
-      ); } }); }); }
-  }} }
+  // Avatar File Upload Handler
+  elements.pAvatarFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const newAvatarUrl = e.target.result;
+        elements.profileAvatar.src = newAvatarUrl;
+        elements.headerAvatar.src = newAvatarUrl;
+        
+        // Save avatar URL to userProfile
+        if (userProfile) {
+          userProfile.avatar = newAvatarUrl;
+          saveState();
+          showToast('Avatar updated locally.', 'success');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 
-/* ================== INIT UI ================== */
-function updateClockGreeting(){ const now=new Date(); document.getElementById('clock').textContent = formatTime(now); document.getElementById('todayDate').textContent = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' }); const h=now.getHours(); let g='Good Evening'; if(h<12) g='Good Morning'; else if(h<17) g='Good Afternoon'; document.getElementById('welcomeMsg').textContent=g; }
+  // Email Profile Handler (UPDATED to use MANAGEMENT_EMAIL)
+  elements.emailProfile.addEventListener('click', () => {
+    if (!userProfile) {
+      showToast('Please save your profile details first.', 'warning');
+      return;
+    }
+    const subject = encodeURIComponent(`Profile Update Request - ${userProfile.name}`);
+    const body = encodeURIComponent(`
+        Dear Admin,
+        
+        Please find my updated profile details below:
+        Name: ${userProfile.name}
+        Roll: ${userProfile.roll}
+        Room: ${userProfile.room}
+        Email: ${userProfile.email}
+        Phone: ${userProfile.phone}
+        
+        Thank you.
+    `);
+    // Use the new MANAGEMENT_EMAIL constant
+    window.open(`mailto:${MANAGEMENT_EMAIL}?subject=${subject}&body=${body}`, '_blank');
+    showToast('Opening email client in a new tab...', 'info');
+  });
 
-// wire actions
-document.getElementById('openEditProfile').addEventListener('click', ()=>{ showEditProfile(); });
-document.getElementById('editProfileBtn').addEventListener('click',(e)=>{ e.preventDefault(); showEditProfile(); profileDropdown.classList.remove('show'); });
-document.getElementById('viewProfileBtn').addEventListener('click',(e)=>{ e.preventDefault(); const saved=JSON.parse(localStorage.getItem('hostel_profile')||'{}'); openModal(`<div style="font-weight:800">Profile</div><div style='margin-top:8px'><strong>${saved.name||'Guest'}</strong><div class='muted'>${saved.roll||''}</div><div class='muted'>${saved.email||''}</div><div class='muted'>${saved.phone||''}</div></div><div style='text-align:right;margin-top:12px'><button class='btn' id='closeModalView'>Close</button></div>`); document.getElementById('closeModalView').addEventListener('click', closeModal); profileDropdown.classList.remove('show'); });
+  // Complaint Submission Handlers (NEW)
+  elements.sendEmailBtn.addEventListener('click', () => handleComplaintSubmit('email'));
+  elements.sendWhatsappBtn.addEventListener('click', () => handleComplaintSubmit('whatsapp'));
 
-// modal backdrop click -> close
-document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+  // Receipt Search Handlers
+  elements.searchBtn.addEventListener('click', searchStudent);
+  elements.searchName.addEventListener('input', searchStudent); // Live search/filter
 
-// Search enter key
-document.getElementById('searchName').addEventListener('keypress',(e)=>{ if(e.key==='Enter') document.getElementById('searchBtn').click(); });
+  // Signup Handler
+  elements.createProfileBtn.addEventListener('click', handleSignup);
 
-// Download all receipts quick demo (exports empty template)
-document.getElementById('downloadAllReceipts').addEventListener('click', ()=>{ showToast('Exporting sample receipt...'); const sample=studentsData[0]; generatePDF(sample, paidToStaff[0].id, sample.datePaid); });
 
-/* ================== STARTUP ================== */
-renderDaySelector(); renderStudentsList(); renderTeam(); applyProfile(); updateClockGreeting(); setInterval(updateClockGreeting,60000); setInterval(checkAndNotify,30000); initOneSignal();
+  // Modal Toggles
+  function toggleModal(modalId, show) {
+    document.getElementById(modalId).classList.toggle('show', show);
+  }
 
-/* ================== TOAST ========== */
-function showToast(msg){ const el=document.createElement('div'); el.style.position='fixed'; el.style.bottom='110px'; el.style.left='50%'; el.style.transform='translateX(-50%)'; el.style.background='linear-gradient(90deg,#06b6d4,#0ea5e9)'; el.style.color='#042022'; el.style.padding='10px 14px'; el.style.borderRadius='10px'; el.style.boxShadow='0 10px 30px rgba(2,6,23,0.6)'; el.style.zIndex=9999; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>{ el.style.transition='opacity 0.3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),350); },3000); }
+  elements.viewRulesBtn.addEventListener('click', () => toggleModal('rulesModal', true));
+  elements.openRulesFromSignup.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleModal('rulesModal', true);
+  });
+  elements.closeRules.addEventListener('click', () => toggleModal('rulesModal', false));
+  elements.signupCancel.addEventListener('click', () => toggleModal('signupModal', false));
 
-/* ================== SERVICE WORKER REGISTRATION (for push) ================== */
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('/OneSignalSDKWorker.js').then(reg=>{ console.log('Service worker registered:', reg); }).catch(err=>console.warn('SW register fail',err)); }
+  elements.headerProfile.addEventListener('click', () => {
+    switchView('profile');
+  });
 
-/* ================== NOTES ================== */
-// 1) You must host the two OneSignal worker files at the root of your site: /OneSignalSDKWorker.js and /OneSignalSDKUpdaterWorker.js
-// 2) For closed-app push notifications, configure OneSignal Dashboard or call its REST API from a server to schedule notifications at meal start times.
-// 3) Replace ONESIGNAL_APP_ID above with your OneSignal App ID.
+  /* ========== INITIALIZE APP ========== */
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    updateClock();
+    // Start clock timer
+    setInterval(updateClock, 1000);
+    renderTeamView(); // Display initial team/resident list
+    renderProfileView(); // Populate profile fields
 
+    // Decide initial view
+    switchView('dashboard');
+    if (!userProfile) {
+      elements.signupModal.classList.add('show');
+    }
+  });
 </script>
-
-<!-- ================== OneSignal worker files (place these at your server root) ==================
-  Create files at the web root: OneSignalSDKWorker.js and OneSignalSDKUpdaterWorker.js
-  Example content (both files can be identical):
-
-  // OneSignalSDKWorker.js
-  importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
-
-  // OneSignalSDKUpdaterWorker.js
-  importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
-
-  Save both of the above at the root alongside index.html. OneSignal requires them to be available at the origin root to deliver push while page is closed.
-
-  ========================================================================================= -->
-
 </body>
 </html>
