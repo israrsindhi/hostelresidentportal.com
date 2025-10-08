@@ -1,0 +1,1556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>The Indus Boys Hostel Services, Sukkur — Resident Portal</title>
+
+<link rel="icon" type="image/png" href="https://i.postimg.cc/7CFG4hRp/hostel-logo.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent: #0ea5e9;
+    --accent-dark: #0284c7;
+    --accent-light: #7dd3fc;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  .dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --shadow: 0 4px 6px -1px rgb(255 255 255 / 0.05), 0 2px 4px -2px rgb(255 255 255 / 0.05);
+  }
+  * {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .app-container {
+    max-width: 500px;
+    margin: 0 auto;
+    min-height: 10vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 70px; /* Space for fixed navigation */
+  }
+  /* Header Styles */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: var(--shadow);
+  }
+  .header-info {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  /* NEW: Logo styling */
+  .header-logo {
+      height: 35px; /* Adjust height for mobile header */
+      width: auto;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .header-icon {
+    background: var(--bg-tertiary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .header-icon:hover {
+    background: var(--border-color);
+  }
+  #headerAvatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  /* Main Content Area */
+  .content {
+    padding: 16px;
+    flex-grow: 1;
+  }
+  .hidden {
+    display: none !important;
+  }
+  .card {
+    background-color: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  
+  /* Dashboard Specific */
+  .info-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  .info-icon.info { background: var(--accent-light); }
+  .info-title { font-weight: 600; }
+  .info-text { font-size: 0.85rem; color: var(--text-secondary); }
+
+  .day-selector {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .day-btn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    margin-right: 8px;
+    cursor: pointer;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .day-btn.active {
+    background-color: var(--accent);
+    color: white;
+    box-shadow: 0 2px 5px rgba(14, 165, 233, 0.5);
+  }
+
+  .meal-card {
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    transition: all 0.3s;
+  }
+  .meal-card:hover {
+    box-shadow: var(--shadow);
+  }
+  .meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .meal-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .meal-status {
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .status-live { background-color: var(--danger); color: white; }
+  .status-next { background-color: var(--warning); color: var(--text-primary); }
+  .meal-time {
+    font-size: 0.85rem;
+    color: var(--accent-dark);
+  }
+  .meal-items {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  /* Team List */
+  .student-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+  .student-item:last-child {
+    border-bottom: none;
+  }
+  .student-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-light);
+  }
+  .student-name {
+    font-weight: 600;
+  }
+  .student-roll {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .student-item:hover {
+      background-color: var(--bg-tertiary);
+      margin: 0 -16px;
+      padding: 10px 16px;
+  }
+  
+  /* NEW: Social Links Container */
+  .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+  }
+  .social-link {
+      color: var(--accent);
+      font-size: 1.5rem;
+      transition: color 0.2s;
+  }
+  .social-link:hover {
+      color: var(--accent-dark);
+  }
+
+
+  /* Schedule Tabs */
+  .schedule-tabs {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .schedule-tab {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+  .schedule-tab.active {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+  }
+
+  /* Receipt View */
+  .receipt-note {
+      padding: 16px;
+      border: 2px solid var(--danger);
+      border-radius: 8px;
+      background-color: var(--bg-tertiary);
+      text-align: center;
+      color: var(--text-primary);
+      font-weight: 600;
+  }
+  .receipt-note a {
+      color: var(--accent);
+      text-decoration: underline;
+  }
+
+
+  /* Profile View */
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .profile-avatar-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+  }
+  #profileAvatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+  }
+  .avatar-upload-label {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--accent);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  #pAvatarFile {
+    display: none;
+  }
+  .profile-form-group {
+    margin-bottom: 12px;
+  }
+  .profile-form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .profile-form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  .profile-form-group input:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s, opacity 0.2s;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background-color: var(--accent);
+    color: white;
+    box-shadow: 0 2px 5px rgba(14, 165, 233, 0.5);
+  }
+  .btn-primary:hover {
+    background-color: var(--accent-dark);
+  }
+  .btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background-color: var(--border-color);
+  }
+  .btn-full {
+    width: 100%;
+  }
+  .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+  }
+  .profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  /* Complaint Textarea Fix */
+  textarea {
+      resize: vertical;
+      min-height: 100px;
+  }
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1);
+    z-index: 20;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 8px 0;
+  }
+  .nav-item {
+    flex-grow: 1;
+    text-align: center;
+    padding: 8px 0;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+  }
+  .nav-item i {
+    font-size: 1.2rem;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .nav-item span {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .nav-item.active {
+    color: var(--accent);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+  }
+  .modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+  .modal-content {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+    box-shadow: var(--shadow);
+  }
+  .modal-overlay.show .modal-content {
+    transform: translateY(0);
+  }
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .modal-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+  }
+  .modal-form-group {
+    margin-bottom: 15px;
+  }
+  .modal-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  .modal-form-group input[type="text"], 
+  .modal-form-group input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  .modal-form-group input[type="checkbox"] {
+      margin-right: 8px;
+  }
+  .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+  }
+  
+  /* Toast Notification */
+  .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 40;
+      opacity: 0;
+      transition: opacity 0.3s;
+  }
+  .toast-success { background-color: var(--success); }
+  .toast-danger { background-color: var(--danger); }
+  .toast-info { background-color: var(--accent); }
+  .toast-warning { background-color: var(--warning); color: var(--text-primary); }
+
+  /* REMOVED: PDF Content Styling */
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<div class="app-container">
+  <header class="header">
+    <div class="header-info">
+        <img src="https://i.postimg.cc/7CFG4hRp/hostel-logo.png" alt="Hostel Logo" class="header-logo" />
+    </div>
+    <div class="header-actions">
+        <div class="header-icon" id="themeToggle">🌙</div>
+        <div class="header-icon" id="headerProfile">
+            <img id="headerAvatar" src="https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80" alt="Profile" />
+        </div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <section id="view-dashboard" class="view">
+      <h1 id="welcomeMsg" class="text-xl font-bold mb-2">Good Day, Resident!</h1>
+      <p id="todayDate" class="text-sm text-muted mb-4"></p>
+      <div class="card info-card">
+          <div class="info-icon info">🕒</div>
+          <div>
+              <div class="info-title">Current Time</div>
+              <div id="clock" class="text-xl font-bold">12:00 PM</div>
+          </div>
+      </div>
+
+      <h2 class="text-lg font-semibold mt-6 mb-3" style="font-size:1.25rem;">Daily Meal Schedule</h2>
+      <div id="daySelector" class="day-selector"></div>
+      <div id="mealNotification" class="card info-card" style="margin-bottom:16px;"></div>
+      <div id="mealsContainer" class="meals-container"></div>
+    </section>
+
+    <section id="view-schedule" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Weekly Schedule</h2>
+        <div id="weekTabs" class="schedule-tabs"></div>
+        <div id="scheduleDetails" class="schedule-details"></div>
+    </section>
+
+    <section id="view-receipt" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Generate Fee Receipt</h2>
+        
+        <div class="receipt-note">
+            <p>On this device you can not generate PDF.</p>
+            <p style="margin-top: 10px;">Go to <a href="https://israrsindhi.github.io/hostelresidentportal.com/" target="_blank">https://israrsindhi.github.io/hostelresidentportal.com/</a> to generate your fees receipt.</p>
+            <p style="margin-top: 10px;">Thank You</p>
+        </div>
+        </section>
+
+    <section id="view-team" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Hostel Management Team</h2>
+        <div class="card">
+            <div id="managementTeamList">
+                </div>
+        </div>
+        
+        <h2 class="text-xl font-bold mt-4 mb-3">Current Residents</h2>
+        <div class="card">
+            <div id="studentsList">
+                </div>
+        </div>
+        
+        <h2 class="text-xl font-bold mt-4 mb-3">Stay Connected</h2>
+        <div class="card">
+            <div class="card-subtitle" style="text-align: center; margin-bottom: 15px;">Visit our website or follow us on social media for updates.</div>
+            <div class="social-links">
+                <a href="https://israrsindhi.github.io/hostelresidentportal.com/" target="_blank" class="social-link" title="Hostel Website"><i class="fas fa-globe"></i></a>
+                <a href="https://www.facebook.com/IndusBoysHostel" target="_blank" class="social-link" title="Facebook"><i class="fab fa-facebook"></i></a>
+                <a href="https://wa.me/923137352949" target="_blank" class="social-link" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+        </section>
+    
+    <section id="view-complaint" class="view hidden">
+        <h2 class="text-xl font-bold mb-3">Submit a Complaint / Suggestion</h2>
+        <div class="card">
+            <p class="card-subtitle" style="margin-bottom:15px;">Your feedback is important. Please use the form below to submit issues directly to the management. You can choose to send via Email or WhatsApp.</p>
+            <div class="profile-form-group">
+                <label for="complaintSubject">Subject (Room Issue, Mess Suggestion, etc.)</label>
+                <input type="text" id="complaintSubject" placeholder="Brief subject line" required>
+            </div>
+            <div class="profile-form-group">
+                <label for="complaintBody">Detailed Message</label>
+                <textarea id="complaintBody" rows="5" placeholder="Describe the issue or suggestion clearly..." required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-tertiary); color: var(--text-primary);"></textarea>
+            </div>
+            <div class="profile-actions" style="margin-top:20px;">
+                <button id="sendEmailBtn" class="btn btn-primary flex-1"><i class="fas fa-envelope"></i> Send via Email</button>
+                <button id="sendWhatsappBtn" class="btn btn-secondary flex-1" style="background-color:#25D366; color:white;"><i class="fab fa-whatsapp"></i> Send via WhatsApp</button>
+            </div>
+            <p id="complaintMsg" class="text-sm" style="margin-top:15px;"></p>
+        </div>
+    </section>
+
+
+    <section id="view-profile" class="view hidden">
+        <div class="profile-header card">
+            <div class="profile-avatar-container">
+                <img id="profileAvatar" src="https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80" alt="Profile Avatar" />
+                <label for="pAvatarFile" class="avatar-upload-label">
+                    <i class="fas fa-camera"></i>
+                </label>
+                <input type="file" id="pAvatarFile" accept="image/*">
+            </div>
+            <h2 id="profileNameTitle" class="text-2xl font-bold mt-2">Guest User</h2>
+            <p id="profileSmall" class="text-sm text-muted">Roll: N/A | Room: N/A</p>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Personal Information</h3>
+            <div class="profile-form-group">
+                <label for="pName">Full Name</label>
+                <input type="text" id="pName" placeholder="Your Full Name">
+            </div>
+            <div class="profile-form-group">
+                <label for="pRoll">Roll Number</label>
+                <input type="text" id="pRoll" placeholder="e.g., 20K-1234">
+            </div>
+            <div class="profile-form-group">
+                <label for="pEmail">Email Address</label>
+                <input type="email" id="pEmail" placeholder="you@example.com">
+            </div>
+            <div class="profile-form-group">
+                <label for="pPhone">Phone Number</label>
+                <input type="text" id="pPhone" placeholder="03001234567">
+            </div>
+            <div class="profile-form-group">
+                <label for="pRoom">Room Number</label>
+                <input type="text" id="pRoom" placeholder="e.g., A-101">
+            </div>
+            <p id="profileMsg" class="text-sm text-success" style="color:var(--success); margin-bottom:15px;">Fill in your details to save them locally.</p>
+            <div class="profile-actions">
+                <button id="saveProfile" class="btn btn-primary flex-1">Save Profile</button>
+                <button id="emailProfile" class="btn btn-secondary flex-1">Email Details</button>
+            </div>
+            <button id="viewRulesBtn" class="btn btn-secondary btn-full mt-3">View Hostel Rules</button>
+        </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-view="dashboard">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </div>
+    <div class="nav-item" data-view="schedule">
+        <i class="fas fa-utensils"></i>
+        <span>Meals</span>
+    </div>
+    <div class="nav-item" data-view="receipt">
+        <i class="fas fa-file-invoice"></i>
+        <span>Receipts</span>
+    </div>
+    <div class="nav-item" data-view="team">
+        <i class="fas fa-users"></i>
+        <span>Team</span>
+    </div>
+    <div class="nav-item" data-view="complaint">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Complaint</span>
+    </div>
+    <div class="nav-item" data-view="profile">
+        <i class="fas fa-user-circle"></i>
+        <span>Profile</span>
+    </div>
+  </nav>
+</div>
+
+<div id="signupModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="modal-title">Welcome to IBH!</h2>
+        <p class="modal-subtitle">Create your local resident profile.</p>
+        <div class="modal-form-group">
+            <label for="sName">Full Name</label>
+            <input type="text" id="sName" placeholder="Your Full Name">
+        </div>
+        <div class="modal-form-group">
+            <label for="sRoll">Roll Number</label>
+            <input type="text" id="sRoll" placeholder="e.g., 20K-1234">
+        </div>
+        <div class="modal-form-group">
+            <label for="sEmail">Email Address</label>
+            <input type="email" id="sEmail" placeholder="you@example.com">
+        </div>
+        <div class="modal-form-group">
+            <label for="sPhone">Phone Number</label>
+            <input type="text" id="sPhone" placeholder="03001234567">
+        </div>
+        <div class="modal-form-group">
+            <label for="sRoom">Room Number</label>
+            <input type="text" id="sRoom" placeholder="e.g., A-101">
+        </div>
+        <div class="modal-form-group" style="display:flex; align-items:center;">
+            <input type="checkbox" id="acceptTerms">
+            <label for="acceptTerms" style="display:inline; margin-bottom:0;">I accept the <a href="#" id="openRulesFromSignup" style="color:var(--accent); font-weight:700;">Hostel Rules</a></label>
+        </div>
+        <p id="signupMsg" class="text-sm text-danger" style="color:var(--danger); margin-top:-10px;"></p>
+        <div class="modal-actions">
+            <button id="signupCancel" class="btn btn-secondary">Cancel</button>
+            <button id="createProfileBtn" class="btn btn-primary">Create Profile</button>
+        </div>
+    </div>
+</div>
+
+<div id="rulesModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="modal-title">Hostel Rules & Regulations</h2>
+        <div style="font-size:0.9rem; color:var(--text-secondary); line-height:1.5;">
+               <p>1. Silence must be maintained in the reading room and study areas.</p>
+<p>2. It is mandatory for you to keep secure your personal items (Mobile, Watch, or cash, etc.). In case of loss, hostel management will not be responsible.</p>
+<p>3. Visitors are allowed only with permission.</p>
+<p>4. <b>Cleaning hours are from 4:30 PM to 6:30 PM every day. Residents must cooperate.</b></p>
+<p>5. Mess timings must be strictly followed. No food will be served after closing time.</p>
+<p>6. Any damage to hostel property will be penalized.</p>
+<p>7. Smoking and use of any intoxicants are completely prohibited on the premises.</p>
+<p>8. Entry/exit is restricted between 11:00 PM – 6:00 AM without prior approval.</p>
+<p>9. Unauthorized or uninformed guests are not allowed.</p>
+<p>10. Random inspections may be conducted.</p>
+<p>11. Violation of rules can lead to suspension or removal from the hostel without refund at any stage.</p>
+        </div>
+        <div class="modal-actions">
+            <button id="closeRules" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+  /* ========== DATA & CONFIGURATION (UPDATED CONTACTS AND LINKS) ========== */
+  let userProfile = null;
+  let currentView = 'dashboard';
+  let currentTheme = 'light';
+  
+  // NEW CONTACT CONSTANTS
+  const MANAGEMENT_EMAIL = 'indusboyshostelsuk@gmail.com';
+  const MANAGEMENT_PHONE_WA_DISPLAY = '0313-7352949';
+  const MANAGEMENT_PHONE_WA = '923137352949'; // Using '92' (Pakistan code) for WhatsApp link
+
+  // NEW SOCIAL/WEBSITE LINKS
+  const HOSTEL_WEBSITE = 'https://israrsindhi.github.io/hostelresidentportal.com/'; // Using the provided link as the main website
+  const HOSTEL_FACEBOOK = 'https://www.facebook.com/IndusBoysHostel'; 
+
+  const DEFAULT_AVATAR_URL = 'https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80';
+  const ADMIN_SIGNATURE_URL = 'https://i.postimg.cc/vZztLrMQ/Red-and-White-Minimalist-Christmas-Circle-Sticker-removebg-preview.png'; 
+  const HOSTEL_LOGO_URL = 'https://i.postimg.cc/7CFG4hRp/hostel-logo.png';
+
+  const MEAL_TIMINGS = {
+      'Breakfast': { start: '8:15 AM', end: '9:30 AM' },
+      'Lunch': { start: '1:15 PM', end: '3:30 PM' },
+      'Dinner': { start: '7:45 PM', end: '9:00 PM' },
+  };
+
+  // --------------------------------------------------------------------------------
+  // MODIFIED: Custom fees are now defined per student in the newResidents array
+  // --------------------------------------------------------------------------------
+  const newResidents = [
+      { name: 'Awais Mahar', room: '1 SF', fee: 15000 },
+      { name: 'Ali Zaib', room: '1 SF', fee: 15000 },
+      { name: 'M Nawaz Awan', room: '1 SF', fee: 15000 },
+      { name: 'Farooque Rauf', room: '2 SF', fee: 15000 },
+      { name: 'Farooque Bro', room: '2 SF', fee: 15000 },
+      { name: 'Mubeen', room: '2 SF', fee: 15000 },
+      { name: 'Jareer Ahmed', room: '2 SF', fee: 15000 },
+      { name: 'M Abbas', room: '3 SF', fee: 15000 },
+      { name: 'Jawad javeed', room: '3 SF', fee: 15000 },
+      { name: 'Zain Ali', room: '3 SF', fee: 15000 },
+      { name: 'Shan', room: '4 SF', fee: 15000 },
+      { name: 'Sain . Shan', room: '4 SF', fee: 15000 },
+      { name: 'Sajid Ali', room: '1 FF', fee: 15000 },
+      { name: 'Dr. Furqan', room: '3 FF', fee: 15000 },
+      { name: 'Dr. New', room: '3 FF', fee: 15000 },
+      { name: 'Jawad Ali', room: '3 FF', fee: 15000 },
+      { name: 'Ab. Qadir', room: '4 FF', fee: 15000 },
+      { name: 'Basheer Ahmed', room: '4 FF', fee: 15000 },
+      { name: 'Zulfiqar Ali', room: '4 FF', fee: 15000 }
+  ];
+  
+  const studentsList = newResidents.map((student, index) => ({
+      name: student.name,
+      roll: `20K-${(1000 + index).toString()}`, // Dummy Roll Number
+      room: student.room,
+      email: `${student.name.replace(/\s/g, '.').toLowerCase()}@ibh.com`,
+      phone: `0300${(1234560 + index).toString()}`,
+      avatar: DEFAULT_AVATAR_URL,
+      fee: student.fee, // UPDATED: Now uses the custom fee defined above
+      paidDate: new Date(new Date() - index * 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Recent dummy paid date
+  }));
+
+  
+  // UPDATED CONTACTS for Management Team
+  const managementTeam = [
+      { name: 'Faiq Ali', role: 'Hostel Administrator', contact: MANAGEMENT_PHONE_WA_DISPLAY + ' (WA)', avatar: 'https://i.postimg.cc/9FrGkFmn/Gemini-Generated-Image-76whby76whby76wh.png' },
+      { name: 'Ali Faheem', role: 'Account Manager', contact: MANAGEMENT_PHONE_WA_DISPLAY + ' (WA)', avatar: 'https://i.postimg.cc/5N6wrN4Z/Gemini-Generated-Image-8sktjf8sktjf8skt.png' },
+      { name: 'Dr. Saeed Bapar', role: 'Maintenance Supervisor', contact: MANAGEMENT_PHONE_WA_DISPLAY + ' (WA)', avatar: 'https://i.postimg.cc/ZKKf5STf/Gemini-Generated-Image-mctpyfmctpyfmctp.png' },
+      { name: 'Israr Ali', role: 'App Developer ', contact: MANAGEMENT_EMAIL, avatar: 'https://i.postimg.cc/qMrRVdx4/Ai-Design-Two-color-black-and-white-stroke-personal-avatar-1757780311.webp' },
+      { name: 'Ali Abdullah', role: 'App Developer', contact: MANAGEMENT_EMAIL, avatar: 'https://img.freepik.com/free-vector/initials-letter-b-logo-design_474888-7381.jpg?semt=ais_hybrid&w=740&q=80' },
+  ];
+  // --------------------------------------------------------------------------------
+  // END MODIFIED SECTION
+  // --------------------------------------------------------------------------------
+
+  const newMenu = {
+      'Monday': {
+          "Breakfast": "Aaloo Egg + Tea Paratha",
+          "Lunch": "Sabzi",
+          "Dinner": "Dal Chawal"
+      },
+      'Tuesday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Cholle",
+          "Dinner": "Chicken"
+      },
+      'Wednesday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Daleem Chawal",
+          "Dinner": "Fried Aaloo"
+      },
+      'Thursday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Aaloo",
+          "Dinner": "Sabzi"
+      },
+      'Friday': {
+          "Breakfast": "Tea Paratha",
+          "Lunch": "Special Biryani",
+          "Dinner": "Dal Mung"
+      },
+      'Saturday': {
+          "Breakfast": "Aaloo Egg + Tea Paratha",
+          "Lunch": "Chicken Chana Dal",
+          "Dinner": "Aaloo Egg"
+      },
+      'Sunday': {
+          "Breakfast": "Tea & Special Biscuits",
+          "Lunch": "Cholla / Aaloo Biryani",
+          "Dinner": "Chicken"
+      }
+  };
+
+  const weeklySchedule = Object.keys(newMenu).reduce((acc, day) => {
+      acc[day] = [
+          { name: 'Breakfast', time: MEAL_TIMINGS.Breakfast.start, items: newMenu[day].Breakfast },
+          { name: 'Lunch', time: MEAL_TIMINGS.Lunch.start, items: newMenu[day].Lunch },
+          { name: 'Dinner', time: MEAL_TIMINGS.Dinner.start, items: newMenu[day].Dinner }
+      ];
+      return acc;
+  }, {});
+
+
+  /* ========== DOM ELEMENTS (FIXED AND COMPLETE) ========== */
+  const elements = {
+    // Views
+    dashboardView: document.getElementById('view-dashboard'),
+    scheduleView: document.getElementById('view-schedule'),
+    receiptView: document.getElementById('view-receipt'),
+    profileView: document.getElementById('view-profile'),
+    teamView: document.getElementById('view-team'),
+    complaintView: document.getElementById('view-complaint'), // NEW
+
+    // Dashboard
+    welcomeMsg: document.getElementById('welcomeMsg'),
+    todayDate: document.getElementById('todayDate'),
+    clock: document.getElementById('clock'),
+    daySelector: document.getElementById('daySelector'),
+    mealsContainer: document.getElementById('mealsContainer'),
+    mealNotification: document.getElementById('mealNotification'),
+    studentsList: document.getElementById('studentsList'),
+    managementTeamList: document.getElementById('managementTeamList'),
+
+    // Navigation
+    navItems: document.querySelectorAll('.bottom-nav .nav-item'),
+    themeToggle: document.getElementById('themeToggle'),
+    headerProfile: document.getElementById('headerProfile'),
+    headerAvatar: document.getElementById('headerAvatar'),
+
+    // Schedule
+    weekTabs: document.getElementById('weekTabs'),
+    scheduleDetails: document.getElementById('scheduleDetails'),
+
+    // Receipt
+    // REMOVED: searchName, searchBtn, searchResult, receiptPreviewContainer, receiptForPdf
+
+    // Profile
+    profileNameTitle: document.getElementById('profileNameTitle'),
+    profileSmall: document.getElementById('profileSmall'),
+    profileAvatar: document.getElementById('profileAvatar'),
+    pName: document.getElementById('pName'),
+    pRoll: document.getElementById('pRoll'),
+    pEmail: document.getElementById('pEmail'),
+    pPhone: document.getElementById('pPhone'),
+    pRoom: document.getElementById('pRoom'),
+    pAvatarFile: document.getElementById('pAvatarFile'),
+    saveProfile: document.getElementById('saveProfile'),
+    emailProfile: document.getElementById('emailProfile'),
+    viewRulesBtn: document.getElementById('viewRulesBtn'),
+    profileMsg: document.getElementById('profileMsg'),
+
+    // Complaint (NEW)
+    complaintSubject: document.getElementById('complaintSubject'),
+    complaintBody: document.getElementById('complaintBody'),
+    sendEmailBtn: document.getElementById('sendEmailBtn'),
+    sendWhatsappBtn: document.getElementById('sendWhatsappBtn'),
+    complaintMsg: document.getElementById('complaintMsg'),
+
+
+    // Modals
+    signupModal: document.getElementById('signupModal'),
+    rulesModal: document.getElementById('rulesModal'),
+    sName: document.getElementById('sName'),
+    sRoll: document.getElementById('sRoll'),
+    sEmail: document.getElementById('sEmail'),
+    sPhone: document.getElementById('sPhone'),
+    sRoom: document.getElementById('sRoom'),
+    acceptTerms: document.getElementById('acceptTerms'),
+    openRulesFromSignup: document.getElementById('openRulesFromSignup'),
+    createProfileBtn: document.getElementById('createProfileBtn'),
+    signupCancel: document.getElementById('signupCancel'),
+    closeRules: document.getElementById('closeRules'),
+    signupMsg: document.getElementById('signupMsg'),
+  };
+
+  /* ========== UTILITY FUNCTIONS (UPDATED) ========== */
+
+  function saveState() {
+    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    localStorage.setItem('currentTheme', currentTheme);
+  }
+
+  function loadState() {
+    const profile = localStorage.getItem('userProfile');
+    const theme = localStorage.getItem('currentTheme');
+    if (profile) userProfile = JSON.parse(profile);
+    if (theme) currentTheme = theme;
+
+    // Simulate finding the user in the students list on load
+    if (userProfile && !userProfile.found) {
+        const foundStudent = studentsList.find(s => s.roll === userProfile.roll);
+        if (foundStudent) {
+            userProfile = {...userProfile, ...foundStudent, found: true};
+            saveState();
+        } else {
+            // If user's data is outdated or roll number not found, revert to only local state
+        }
+    } else if (userProfile && userProfile.found) {
+        // If already found, update with dummy data just in case it was refreshed (in a real app, this would be an API call)
+        const updatedStudent = studentsList.find(s => s.roll === userProfile.roll);
+        if (updatedStudent) {
+            userProfile = {...userProfile, ...updatedStudent};
+            saveState();
+        }
+    }
+  }
+
+  function showToast(message, type = 'info', duration = 3000) {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Animate the toast in (small delay to ensure it renders before transition)
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 10);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.addEventListener('transitionend', () => toast.remove());
+    }, duration);
+  }
+
+  function validateEmail(email) {
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-1]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  }
+
+  function validatePhone(phone) {
+    // Simple check for 7 to 15 digits
+    const re = /^\d{7,15}$/;
+    return re.test(String(phone).replace(/\s|-/g, ''));
+  }
+
+  /* ========== APP LOGIC ========== */
+
+  function initTheme() {
+    loadState();
+    if (currentTheme === 'dark') {
+      document.body.classList.add('dark');
+      elements.themeToggle.textContent = '☀️';
+    } else {
+      document.body.classList.remove('dark');
+      elements.themeToggle.textContent = '🌙';
+    }
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+
+    elements.clock.textContent = timeString;
+    elements.todayDate.textContent = dateString;
+
+    const hour = now.getHours();
+    let greeting = 'Good Evening';
+    if (hour < 12) greeting = 'Good Morning';
+    else if (hour < 17) greeting = 'Good Afternoon';
+
+    elements.welcomeMsg.textContent = `${greeting}, ${userProfile ? userProfile.name.split(' ')[0] : 'Resident'}!`;
+  }
+
+  function switchView(viewId) {
+    const views = {
+      dashboard: elements.dashboardView,
+      schedule: elements.scheduleView,
+      receipt: elements.receiptView,
+      profile: elements.profileView,
+      team: elements.teamView,
+      complaint: elements.complaintView, // NEW
+    };
+
+    // Hide all views
+    Object.values(views).forEach(v => v.classList.add('hidden'));
+
+    // Show selected view
+    if (views[viewId]) {
+      views[viewId].classList.remove('hidden');
+      currentView = viewId;
+    }
+
+    // Update nav active state
+    elements.navItems.forEach(item => {
+      item.classList.toggle('active', item.dataset.view === viewId);
+    });
+
+    // Special view rendering
+    if (viewId === 'dashboard') {
+      renderDashboard();
+    } else if (viewId === 'schedule') {
+      renderScheduleView();
+    } else if (viewId === 'profile') {
+      renderProfileView();
+    } else if (viewId === 'team') {
+        renderTeamView();
+    }
+    // Note: receipt view requires no extra rendering logic now
+  }
+
+  /* ========== DASHBOARD RENDERERS (UNCHANGED) ========== */
+
+  function renderDashboard() {
+    const days = Object.keys(weeklySchedule);
+    const todayIndex = new Date().getDay() - 1; // 0=Mon, 6=Sun
+    const today = days[todayIndex < 0 ? 6 : todayIndex];
+
+    // 1. Render Day Selector
+    elements.daySelector.innerHTML = days.map(day =>
+      `<button class="day-btn ${day === today ? 'active' : ''}" data-day="${day}">${day}</button>`
+    ).join('');
+
+    // 2. Render Meals for Today (or selected day)
+    renderMeals(today);
+
+    // 3. Add event listeners for day change
+    elements.daySelector.querySelectorAll('.day-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        elements.daySelector.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        renderMeals(e.currentTarget.dataset.day);
+      });
+    });
+
+    // 4. Update welcome message
+    updateClock();
+  }
+
+  // NEW HELPER: Convert AM/PM time string to minutes from midnight
+  function timeToMinutes(timeStr) {
+      const [time, period] = timeStr.split(' ');
+      let [hour, minute] = time.split(':').map(Number);
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0; // Midnight (12:xx AM)
+      return hour * 60 + minute;
+  }
+
+  // NEW HELPER: Checks if current time is within the defined meal time range
+  function isMealLive(mealName) {
+      const timings = MEAL_TIMINGS[mealName];
+      if (!timings) return false;
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const startMinutes = timeToMinutes(timings.start);
+      const endMinutes = timeToMinutes(timings.end);
+
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+
+  function renderMeals(day) {
+    const meals = weeklySchedule[day] || [];
+    elements.mealsContainer.innerHTML = meals.map(meal => {
+      
+      const isLive = isMealLive(meal.name);
+      let statusText = isLive ? 'LIVE' : 'Upcoming';
+      
+      const timeRange = MEAL_TIMINGS[meal.name].start === MEAL_TIMINGS[meal.name].end
+          ? MEAL_TIMINGS[meal.name].start
+          : `${MEAL_TIMINGS[meal.name].start} - ${MEAL_TIMINGS[meal.name].end}`;
+
+
+      return `
+        <div class="meal-card ${isLive ? 'active' : ''}">
+          <div class="meal-header">
+            <div class="meal-name">${meal.name}</div>
+            <div class="meal-status status-${isLive ? 'live' : 'next'}">${statusText}</div>
+          </div>
+          <div class="meal-time">Time: ${timeRange}</div>
+          <div class="meal-items">${meal.items}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Add general notification/tip
+    elements.mealNotification.innerHTML = `
+      <div class="info-icon info">🍽️</div>
+      <div class="info-content">
+        <div class="info-title">Today's Menu</div>
+        <div class="info-text">Please check the schedule for next week's menu variations.</div>
+      </div>
+    `;
+  }
+  
+  /* ========== TEAM RENDERERS (UNCHANGED) ========== */
+
+  function renderResidentsList() {
+    elements.studentsList.innerHTML = studentsList.map(student => `
+      <div class="student-item">
+        <div class="student-item-info">
+            <img src="${student.avatar}" alt="${student.name}" class="student-avatar" />
+            <div>
+              <div class="student-name">${student.name}</div>
+              <div class="student-roll">Roll No: ${student.roll} - Room: ${student.room}</div>
+            </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Render Hostel Management and Developer
+  function renderManagementTeam() {
+    elements.managementTeamList.innerHTML = managementTeam.map(member => `
+        <div class="student-item">
+            <div class="student-item-info">
+                <img src="${member.avatar}" alt="${member.name}" class="student-avatar" />
+                <div>
+                  <div class="student-name">${member.name}</div>
+                  <div class="student-roll">${member.role} | Contact: ${member.contact}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+  }
+
+  // Team View renderer
+  function renderTeamView() {
+      renderManagementTeam();
+      renderResidentsList();
+  }
+
+  /* ========== SCHEDULE RENDERERS (UNCHANGED) ========== */
+
+  function renderScheduleView() {
+    const days = Object.keys(weeklySchedule);
+    const todayIndex = new Date().getDay() - 1; // 0=Mon, 6=Sun
+    const today = days[todayIndex < 0 ? 6 : todayIndex];
+    
+    // 1. Render Tabs
+    elements.weekTabs.innerHTML = days.map(day => 
+      `<button class="schedule-tab ${day === today ? 'active' : ''}" data-day="${day}">${day}</button>`
+    ).join('');
+
+    // 2. Render Details for Today
+    renderScheduleDetails(today);
+
+    // 3. Add event listeners for tabs
+    elements.weekTabs.querySelectorAll('.schedule-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        elements.weekTabs.querySelectorAll('.schedule-tab').forEach(t => t.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        renderScheduleDetails(e.currentTarget.dataset.day);
+      });
+    });
+  }
+
+  function renderScheduleDetails(day) {
+    const meals = weeklySchedule[day] || [];
+    elements.scheduleDetails.innerHTML = meals.map(meal => `
+      <div class="card">
+        <div class="card-title">${meal.name}</div>
+        <div class="card-subtitle">${MEAL_TIMINGS[meal.name].start} - ${MEAL_TIMINGS[meal.name].end}</div>
+        <div style="margin-top:8px;font-size:14px;color:var(--text-secondary);">
+          ${meal.items}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ========== PROFILE RENDERERS/HANDLERS (UNCHANGED) ========== */
+
+  function renderProfileView() {
+    if (userProfile) {
+      elements.pName.value = userProfile.name || '';
+      elements.pRoll.value = userProfile.roll || '';
+      elements.pEmail.value = userProfile.email || '';
+      elements.pPhone.value = userProfile.phone || '';
+      elements.pRoom.value = userProfile.room || '';
+
+      elements.profileNameTitle.textContent = userProfile.name || 'Guest User';
+      elements.profileSmall.textContent = `Roll: ${userProfile.roll || 'N/A'} | Room: ${userProfile.room || 'N/A'}`;
+      elements.profileAvatar.src = userProfile.avatar || DEFAULT_AVATAR_URL;
+      elements.headerAvatar.src = userProfile.avatar || DEFAULT_AVATAR_URL;
+
+      elements.profileMsg.textContent = 'Last saved details.';
+    }
+  }
+
+  function handleProfileSave() {
+    const name = elements.pName.value.trim();
+    const roll = elements.pRoll.value.trim();
+    const email = elements.pEmail.value.trim();
+    const phone = elements.pPhone.value.trim();
+    const room = elements.pRoom.value.trim();
+
+    if (!name || !roll || !email || !phone || !room) {
+      elements.profileMsg.textContent = 'All fields are required.';
+      elements.profileMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      elements.profileMsg.textContent = 'Please enter a valid email address.';
+      elements.profileMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validatePhone(phone)) {
+      elements.profileMsg.textContent = 'Please enter a valid phone number.';
+      elements.profileMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    // Update userProfile (or create a new one if null)
+    userProfile = {
+      ...(userProfile || {}),
+      name,
+      roll,
+      email,
+      phone,
+      room,
+      avatar: userProfile ? userProfile.avatar : DEFAULT_AVATAR_URL, // Keep old avatar or use default
+      found: userProfile ? userProfile.found : false,
+      fee: userProfile ? userProfile.fee : 'N/A',
+      paidDate: userProfile ? userProfile.paidDate : 'N/A'
+    };
+    saveState();
+    renderProfileView();
+    showToast('Profile saved successfully!', 'success');
+    elements.profileMsg.style.color = 'var(--success)';
+    elements.profileMsg.textContent = 'Profile saved locally.';
+  }
+
+  function handleSignup() {
+    const name = elements.sName.value.trim();
+    const roll = elements.sRoll.value.trim();
+    const email = elements.sEmail.value.trim();
+    const phone = elements.sPhone.value.trim();
+    const room = elements.sRoom.value.trim();
+    const accepted = elements.acceptTerms.checked;
+
+    if (!name || !roll || !email || !phone || !room) {
+      elements.signupMsg.textContent = 'All fields are required.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      elements.signupMsg.textContent = 'Invalid email format.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!validatePhone(phone)) {
+      elements.signupMsg.textContent = 'Invalid phone number format.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!accepted) {
+      elements.signupMsg.textContent = 'You must accept the terms & rules.';
+      elements.signupMsg.style.color = 'var(--danger)';
+      return;
+    }
+
+    // Check if user is in dummy list (simulating admin approval)
+    const foundStudent = studentsList.find(s => s.roll === roll);
+
+    userProfile = {
+      name,
+      roll,
+      email,
+      phone,
+      room,
+      avatar: DEFAULT_AVATAR_URL, // Default avatar
+      found: !!foundStudent, // Track if they are a real/approved student
+      fee: foundStudent ? foundStudent.fee : 'N/A', // CORRECTLY USES FOUND STUDENT FEE
+      paidDate: foundStudent ? foundStudent.paidDate : 'N/A'
+    };
+
+    saveState();
+    renderProfileView();
+    toggleModal('signupModal', false);
+    switchView('dashboard');
+    showToast(`Welcome, ${name.split(' ')[0]}! Profile created.`, 'success');
+  }
+
+  /* ========== RECEIPT LOGIC (REMOVED/MODIFIED) ========== */
+
+  // REMOVED: searchStudent
+  // REMOVED: renderReceiptPreview
+  // REMOVED: renderReceiptForPdf
+  // REMOVED: downloadReceipt
+
+
+  /* ========== COMPLAINT LOGIC (UNCHANGED) ========== */
+
+  function handleComplaintSubmit(type) {
+    const subject = elements.complaintSubject.value.trim();
+    const body = elements.complaintBody.value.trim();
+    const msg = elements.complaintMsg;
+
+    if (!subject || !body) {
+        msg.textContent = 'Please fill out both the subject and the detailed message.';
+        msg.style.color = 'var(--danger)';
+        return;
+    }
+
+    const userDetails = userProfile && userProfile.name ? 
+        `\n\n--- Resident Details ---\nName: ${userProfile.name}\nRoll: ${userProfile.roll}\nRoom: ${userProfile.room}\nEmail: ${userProfile.email}\nPhone: ${userProfile.phone}` : 
+        '\n\n--- Resident Details ---\n(Guest/Unsaved Profile)';
+
+    // Encoding subject and body separately
+    const fullSubject = encodeURIComponent(`COMPLAINT: ${subject}`);
+    const fullBody = encodeURIComponent(`${body}${userDetails}`);
+    
+    // Clear message before processing
+    msg.textContent = '';
+
+    if (type === 'email') {
+        // Use MANAGEMENT_EMAIL
+        const mailtoLink = `mailto:${MANAGEMENT_EMAIL}?subject=${fullSubject}&body=${fullBody}`;
+        window.open(mailtoLink, '_blank');
+        showToast('Opening email client...', 'info');
+    } else if (type === 'whatsapp') {
+        // Use MANAGEMENT_PHONE_WA (+92 format) and combine subject and body for text
+        const whatsappText = encodeURIComponent(`*${subject}*\n\n${body}${userDetails}`);
+        const whatsappLink = `https://wa.me/${MANAGEMENT_PHONE_WA}?text=${whatsappText}`;
+        window.open(whatsappLink, '_blank');
+        showToast('Opening WhatsApp in a new window...', 'success');
+    }
+
+    // Reset form fields after submission attempt
+    elements.complaintSubject.value = '';
+    elements.complaintBody.value = '';
+    
+    // Display confirmation message temporarily
+    msg.textContent = 'Message template prepared! Check the new window/app.';
+    msg.style.color = 'var(--success)';
+    setTimeout(() => msg.textContent = '', 5000);
+  }
+
+
+  /* ========== EVENT LISTENERS (MODIFIED) ========== */
+
+  elements.themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
+    elements.themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    saveState();
+  });
+
+  // Navigation Click Handlers
+  elements.navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const view = item.dataset.view;
+      if (view) {
+        switchView(view);
+      }
+    });
+  });
+  
+  // Profile Handlers
+  elements.saveProfile.addEventListener('click', handleProfileSave);
+
+  // Avatar File Upload Handler
+  elements.pAvatarFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const newAvatarUrl = e.target.result;
+        elements.profileAvatar.src = newAvatarUrl;
+        elements.headerAvatar.src = newAvatarUrl;
+        
+        // Save avatar URL to userProfile
+        if (userProfile) {
+          userProfile.avatar = newAvatarUrl;
+          saveState();
+          showToast('Avatar updated locally.', 'success');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Email Profile Handler
+  elements.emailProfile.addEventListener('click', () => {
+    if (!userProfile) {
+      showToast('Please save your profile details first.', 'warning');
+      return;
+    }
+    const subject = encodeURIComponent(`Profile Update Request - ${userProfile.name}`);
+    const body = encodeURIComponent(`
+        Dear Admin,
+        
+        Please find my updated profile details below:
+        Name: ${userProfile.name}
+        Roll: ${userProfile.roll}
+        Room: ${userProfile.room}
+        Email: ${userProfile.email}
+        Phone: ${userProfile.phone}
+        
+        Thank you.
+    `);
+    // Use the new MANAGEMENT_EMAIL constant
+    window.open(`mailto:${MANAGEMENT_EMAIL}?subject=${subject}&body=${body}`, '_blank');
+    showToast('Opening email client in a new tab...', 'info');
+  });
+
+  // Complaint Submission Handlers
+  elements.sendEmailBtn.addEventListener('click', () => handleComplaintSubmit('email'));
+  elements.sendWhatsappBtn.addEventListener('click', () => handleComplaintSubmit('whatsapp'));
+
+  // REMOVED: Receipt Search Handlers (searchBtn, searchName input listener)
+
+  // Signup Handler
+  elements.createProfileBtn.addEventListener('click', handleSignup);
+
+
+  // Modal Toggles
+  function toggleModal(modalId, show) {
+    document.getElementById(modalId).classList.toggle('show', show);
+  }
+
+  elements.viewRulesBtn.addEventListener('click', () => toggleModal('rulesModal', true));
+  elements.openRulesFromSignup.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleModal('rulesModal', true);
+  });
+  elements.closeRules.addEventListener('click', () => toggleModal('rulesModal', false));
+  elements.signupCancel.addEventListener('click', () => toggleModal('signupModal', false));
+
+  elements.headerProfile.addEventListener('click', () => {
+    switchView('profile');
+  });
+
+  /* ========== INITIALIZE APP ========== */
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    updateClock();
+    // Start clock timer
+    setInterval(updateClock, 1000);
+    renderTeamView(); // Display initial team/resident list
+    renderProfileView(); // Populate profile fields
+
+    // Decide initial view
+    switchView('dashboard');
+    if (!userProfile) {
+      elements.signupModal.classList.add('show');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>Indus Boys Hostel - Fee Receipt Generator</title>
+
+<link rel="icon" type="image/png" href="https://i.postimg.cc/7CFG4hRp/hostel-logo.png">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  :root{
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent: #0ea5e9;
+    --accent-dark: #0284c7;
+    --accent-light: #7dd3fc;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  .dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #e2e8f0;
+    --border-color: #334155;
+    --shadow: 0 4px 6px -1px rgb(255 255 255 / 0.05), 0 2px 4px -2px rgb(255 255 255 / 0.05);
+  }
+  * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+  body { margin: 0; padding: 0; background-color: var(--bg-primary); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
+  .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* Header Styles */
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    background-color: var(--bg-secondary);
+    border-bottom: 3px solid var(--accent);
+    box-shadow: var(--shadow);
+  }
+  .header-logo { height: 60px; width: auto; margin-bottom: 10px; }
+  .header-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+  .header-subtitle { font-size: 1.1rem; font-weight: 600; color: var(--accent); margin-top: 5px; }
+
+  /* Content & Card Styles */
+  .content { padding: 16px; flex-grow: 1; }
+  .card { background-color: var(--bg-secondary); padding: 16px; border-radius: 12px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .card-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+  .profile-form-group { margin-bottom: 15px; }
+  label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+  input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-light);
+  }
+  
+  /* Buttons */
+  .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background-color 0.2s, opacity 0.2s; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-primary { background-color: var(--accent); color: white; box-shadow: 0 2px 5px rgba(14, 165, 233, 0.5); }
+  .btn-primary:hover { background-color: var(--accent-dark); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 6px 10px; font-size: 0.85rem; }
+
+  /* Receipt Previews */
+  .receipt-preview { border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; background: var(--bg-secondary); box-shadow: var(--shadow); margin-top: 16px; }
+  .receipt-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted var(--border-color); }
+  .receipt-label { color: var(--text-secondary); font-size: 0.9rem; }
+  .receipt-value { font-weight: 600; color: var(--text-primary); text-align: right; }
+  .student-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+  .student-item:last-child { border-bottom: none; }
+  .student-item:hover { background-color: var(--bg-tertiary); margin: 0 -16px; padding: 10px 16px; }
+
+  /* PDF Content Styling (Hidden for screen, visible for html2canvas) */
+  #receiptForPdf { position: fixed; left: -9999px; top: -9999px; width: 210mm; background: white; padding: 20mm; color: #000; font-family: 'Roboto', sans-serif; font-size: 12pt; }
+  .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+  .pdf-logo { height: 40px; width: auto; margin-right: 15px; }
+  .pdf-company-info .title { font-size: 18pt; font-weight: 700; }
+  .pdf-company-info .subtitle { font-size: 10pt; color: #475569; }
+  .pdf-receipt-meta { text-align: right; font-size: 10pt; }
+  .pdf-section-title { font-size: 14pt; font-weight: 700; color: #1e293b; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+  .pdf-details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; }
+  .pdf-detail-item div { font-size: 9pt; color: #64748b; }
+  .pdf-detail-item strong { font-size: 11pt; font-weight: 500; display: block; margin-top: 2px; }
+  .pdf-amount-words { font-style: italic; margin-top: 15px; font-size: 10pt; padding: 5px; border: 1px dashed #ccc; }
+  .pdf-signature-section { display: flex; justify-content: space-between; margin-top: 40px; align-items: flex-end; }
+  .signature-image { max-width: 120px; height: auto; margin-bottom: -10px; display: block; }
+  .pdf-signature-name { font-size: 10pt; font-weight: 700; }
+  .pdf-signature-title { font-size: 9pt; color: #475569; }
+  .pdf-notes { font-size: 9pt; text-align: right; color: #64748b; }
+  .pdf-footer { text-align: center; margin-top: 30px; font-size: 8pt; color: #64748b; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <header class="header">
+    <img src="https://i.postimg.cc/7CFG4hRp/hostel-logo.png" alt="Hostel Logo" class="header-logo" />
+    <div class="header-title">The Indus Boys Hostel Services, Sukkur</div>
+    <div class="header-subtitle">Fee Receipt Generator</div>
+  </header>
+
+  <main class="content">
+    <section id="view-receipt" class="view">
+        <h2 class="text-xl font-bold mb-3" style="font-size:1.5rem; margin-bottom:20px;">Generate Hostel Fee Receipt</h2>
+        <div class="card">
+            <div class="profile-form-group">
+                <label for="searchName">Search Resident by Name or Roll No:</label>
+                <input type="text" id="searchName" placeholder="e.g., Awais Mahar or 20K-1000">
+            </div>
+        </div>
+
+        <div id="searchResult" class="mt-4">
+            <div class="card" style="text-align:center; color:var(--text-secondary);">
+                Start typing to search for a resident's details.
+            </div>
+        </div>
+
+        <div id="receiptPreviewContainer" class="mt-4">
+        </div>
+    </section>
+  </main>
+</div>
+
+<div id="receiptForPdf"></div>
+
+
+<script>
+  /* ========== CONFIGURATION & DATA ========== */
+  const DEFAULT_AVATAR_URL = 'https://img.freepik.com/premium-photo/memoji-happy-man-white-background-emoji_826801-6833.jpg?semt=ais_hybrid&w=740&q=80';
+  const ADMIN_SIGNATURE_URL = 'https://i.postimg.cc/vZztLrMQ/Red-and-White-Minimalist-Christmas-Circle-Sticker-removebg-preview.png'; 
+  const HOSTEL_LOGO_URL = 'https://i.postimg.cc/7CFG4hRp/hostel-logo.png';
+  const MANAGEMENT_PHONE_WA_DISPLAY = '0313-7352949';
+  const MANAGEMENT_EMAIL = 'indusboyshostelsuk@gmail.com';
+
+  const newResidents = [
+      { name: 'Awais Mahar', room: '1 SF', fee: 15000 },
+      { name: 'Ali Zaib', room: '1 SF', fee: 15000 },
+      { name: 'M Nawaz Awan', room: '1 SF', fee: 15000 },
+      { name: 'Farooque Rauf', room: '2 SF', fee: 15000 },
+      { name: 'Farooque Bro', room: '2 SF', fee: 15000 },
+      { name: 'Mubeen', room: '2 SF', fee: 15000 },
+      { name: 'Jareer Ahmed', room: '2 SF', fee: 15000 },
+      { name: 'M Abbas', room: '3 SF', fee: 15000 },
+      { name: 'Jawad javeed', room: '3 SF', fee: 15000 },
+      { name: 'Zain Ali', room: '3 SF', fee: 15000 },
+      { name: 'Shan', room: '4 SF', fee: 15000 },
+      { name: 'Sain . Shan', room: '4 SF', fee: 15000 },
+      { name: 'Sajid Ali', room: '1 FF', fee: 15000 },
+      { name: 'Dr. Furqan', room: '3 FF', fee: 15000 },
+      { name: 'Dr. New', room: '3 FF', fee: 15000 },
+      { name: 'Jawad Ali', room: '3 FF', fee: 15000 },
+      { name: 'Ab. Qadir', room: '4 FF', fee: 15000 },
+      { name: 'Basheer Ahmed', room: '4 FF', fee: 15000 },
+      { name: 'Zulfiqar Ali', room: '4 FF', fee: 15000 }
+  ];
+  
+  const studentsList = newResidents.map((student, index) => ({
+      name: student.name,
+      roll: `20K-${(1000 + index).toString()}`, // Dummy Roll Number
+      room: student.room,
+      email: `${student.name.replace(/\s/g, '.').toLowerCase()}@ibh.com`,
+      phone: `0300${(1234560 + index).toString()}`,
+      avatar: DEFAULT_AVATAR_URL,
+      fee: student.fee, 
+      // Generate a dummy paid date within the last 30 days
+      paidDate: new Date(new Date() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  }));
+
+  /* ========== DOM ELEMENTS ========== */
+  const elements = {
+    searchName: document.getElementById('searchName'),
+    searchResult: document.getElementById('searchResult'),
+    receiptPreviewContainer: document.getElementById('receiptPreviewContainer'),
+    receiptForPdf: document.getElementById('receiptForPdf'),
+  };
+
+  /* ========== UTILITY FUNCTIONS ========== */
+
+  function showToast(message, type = 'info', duration = 3000) {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Minimal toast styles for this page
+    toast.style.cssText = `
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; 
+        border-radius: 8px; color: white; font-weight: 500; z-index: 40; opacity: 0; 
+        transition: opacity 0.3s; background-color: var(--accent);
+    `;
+    if (type === 'success') toast.style.backgroundColor = 'var(--success)';
+    if (type === 'danger') toast.style.backgroundColor = 'var(--danger)';
+
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '1'; }, 10);
+    setTimeout(() => { toast.style.opacity = '0'; toast.addEventListener('transitionend', () => toast.remove()); }, duration);
+  }
+
+
+  /* ========== RECEIPT LOGIC ========== */
+
+  function searchStudent() {
+    const query = elements.searchName.value.trim().toLowerCase();
+    if (query.length < 2) {
+      elements.searchResult.innerHTML = `
+        <div class="card" style="text-align:center; color:var(--text-secondary);">
+            Start typing to search for a resident's details.
+        </div>
+        `;
+      elements.receiptPreviewContainer.innerHTML = '';
+      return;
+    }
+
+    const filteredStudents = studentsList.filter(s =>
+      s.name.toLowerCase().includes(query) || s.roll.toLowerCase().includes(query)
+    );
+
+    elements.searchResult.innerHTML = filteredStudents.length > 0 ?
+      `
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-subtitle">${filteredStudents.length} result(s) found. Tap a student to generate receipt.</div>
+      </div>
+      ` :
+      `<div class="card" style="text-align:center;">No students found matching "${query}"</div>`;
+
+    elements.receiptPreviewContainer.innerHTML = ''; // Clear preview on new search
+
+    if (filteredStudents.length > 0) {
+      const listHtml = filteredStudents.map(student => `
+        <div class="student-item" data-roll="${student.roll}" role="button" tabindex="0">
+          <div>
+            <div class="student-name">${student.name}</div>
+            <div class="student-roll">Roll: ${student.roll} | Room: ${student.room}</div>
+          </div>
+          <button class="btn btn-primary btn-sm generate-receipt-btn">Generate</button>
+        </div>
+      `).join('');
+
+      const studentListCard = document.createElement('div');
+      studentListCard.className = 'card';
+      studentListCard.innerHTML = listHtml;
+      elements.searchResult.appendChild(studentListCard);
+
+      // Add click listeners to the dynamically generated buttons
+      studentListCard.querySelectorAll('.generate-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          // Find the roll number from the parent div
+          const roll = e.currentTarget.closest('.student-item').dataset.roll;
+          const student = studentsList.find(s => s.roll === roll);
+          if (student) {
+            renderReceiptPreview(student);
+          }
+        });
+      });
+    }
+  }
+
+  function renderReceiptPreview(student) {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const paidDate = student.paidDate ? new Date(student.paidDate).toLocaleDateString() : 'N/A';
+    const amount = student.fee ? student.fee.toLocaleString() : 'N/A';
+    const receiptNo = `IBH-${Math.floor(Math.random() * 90000) + 10000}`;
+    
+    elements.receiptPreviewContainer.innerHTML = `
+      <div class="receipt-preview">
+        <div style="text-align:center; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px;">
+            <div style="font-size:1.1rem; font-weight:600; color:var(--accent);">Receipt Preview</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Student Name</div>
+          <div class="receipt-value">${student.name}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Roll Number</div>
+          <div class="receipt-value">${student.roll}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Room Number</div>
+          <div class="receipt-value">${student.room}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Amount Received (PKR)</div>
+          <div class="receipt-value">PKR ${amount}</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Paid For</div>
+          <div class="receipt-value">Monthly Hostel Fee</div>
+        </div>
+        <div class="receipt-row">
+          <div class="receipt-label">Date of Payment</div>
+          <div class="receipt-value">${paidDate}</div>
+        </div>
+        <div class="receipt-row" style="border-bottom:none;">
+          <div class="receipt-label">Date of Generation</div>
+          <div class="receipt-value">${today}</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="downloadReceiptBtn" style="margin-top:16px;">⬇️ Download Receipt (PDF)</button>
+    `;
+
+    // Add event listener to the newly rendered download button
+    document.getElementById('downloadReceiptBtn').addEventListener('click', () => downloadReceipt(student));
+  }
+
+  function renderReceiptForPdf(student) {
+    const paidDate = student.paidDate ? new Date(student.paidDate).toLocaleDateString() : 'N/A';
+    const amount = student.fee ? student.fee.toLocaleString() : 'N/A';
+    const receiptNo = `IBH-${Math.floor(Math.random() * 90000) + 10000}`;
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    function numberToWords(n) {
+        if (n === 'N/A') return 'Amount Not Available';
+        const num = Number(n);
+        // Extremely simplified conversion, adjust as needed for actual financial documents
+        return `Rupees ${num.toLocaleString()} Only`;
+    }
+    
+    elements.receiptForPdf.innerHTML = `
+      <div class="pdf-header">
+        <div style="display: flex; align-items: center;">
+            <img src="${HOSTEL_LOGO_URL}" alt="Hostel Logo" class="pdf-logo" crossorigin="anonymous" />
+            <div class="pdf-company-info">
+                <div class="title">The Indus Boys Hostel Services, Sukkur</div>
+                <div class="subtitle">Resident Fee Receipt</div>
+            </div>
+        </div>
+        <div class="pdf-receipt-meta">
+            <div><strong>Receipt No:</strong> ${receiptNo}</div>
+            <div><strong>Date:</strong> ${today}</div>
+        </div>
+      </div>
+
+      <div class="pdf-section-title">Recipient Details</div>
+      <div class="pdf-details-grid">
+          <div class="pdf-detail-item">
+              <div>Student Name</div>
+              <strong>${student.name}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Roll Number</div>
+              <strong>${student.roll}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Room Number</div>
+              <strong>${student.room}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Contact Phone</div>
+              <strong>${student.phone || 'N/A'}</strong>
+          </div>
+      </div>
+
+      <div class="pdf-section-title">Payment Summary</div>
+      <div class="pdf-details-grid">
+          <div class="pdf-detail-item">
+              <div>Fee Type</div>
+              <strong>Monthly Hostel Fee</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Amount Paid (PKR)</div>
+              <strong style="font-size: 16px;">PKR ${amount}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Payment Date</div>
+              <strong>${paidDate}</strong>
+          </div>
+          <div class="pdf-detail-item">
+              <div>Payment Method</div>
+              <strong>Bank Transfer/Cash</strong>
+          </div>
+      </div>
+      <div class="pdf-amount-words">
+          Amount in Words: ${numberToWords(student.fee)}
+      </div>
+
+      <div class="pdf-signature-section">
+          <div class="pdf-signature-box">
+              <img src="${ADMIN_SIGNATURE_URL}" alt="Authorized Signature" class="signature-image" crossorigin="anonymous" />
+              <div class="pdf-signature-name">Accounts Department</div>
+              <div class="pdf-signature-title">Authorized Signature</div>
+          </div>
+          <div class="pdf-notes">
+              <strong>Hostel Address:</strong>
+              Banglow #88, 10 Feet Road, Sukkur<br>
+              Contact: ${MANAGEMENT_PHONE_WA_DISPLAY}<br>
+              Email: ${MANAGEMENT_EMAIL}
+          </div>
+      </div>
+      <div class="pdf-footer">
+          Thank you for being a resident at The Indus Boys Hostel Services, Sukkur.
+      </div>
+    `;
+
+    // Make the hidden div accessible for html2canvas
+    elements.receiptForPdf.style.left = '0';
+    elements.receiptForPdf.style.top = '0';
+    elements.receiptForPdf.style.position = 'absolute';
+  }
+
+
+  async function downloadReceipt(student) {
+    showToast(`Generating receipt for ${student.name}...`, 'info');
+
+    // 1. Prepare data for PDF
+    renderReceiptForPdf(student); 
+
+    // 2. Capture the hidden content
+    const input = elements.receiptForPdf;
+
+    try {
+      // Use html2canvas
+      const canvas = await html2canvas(input, { 
+          scale: 2,
+          useCORS: true 
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      // Use jsPDF from the UMD global window object
+      const { jsPDF } = window.jspdf; 
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 210; 
+      const imgProps = pdf.getImageProperties(imgData);
+      
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`receipt-${student.roll}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+
+      showToast('Receipt downloaded successfully!', 'success');
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      showToast('Error generating receipt. See console for details.', 'danger');
+    } finally {
+      // Hide the temporary PDF content again
+      elements.receiptForPdf.style.left = '-9999px';
+      elements.receiptForPdf.style.top = '-9999px';
+      elements.receiptForPdf.style.position = 'fixed';
+    }
+  }
+
+  /* ========== INITIALIZE APP ========== */
+  document.addEventListener('DOMContentLoaded', () => {
+    // Event Listener for live search
+    elements.searchName.addEventListener('input', searchStudent); 
+  });
+</script>
+</body>
+</html>
