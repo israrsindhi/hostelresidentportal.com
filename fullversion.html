@@ -1192,6 +1192,15 @@
     else if (hour < 17) greeting = 'Good Afternoon';
 
     elements.welcomeMsg.textContent = `${greeting}, ${userProfile ? userProfile.name.split(' ')[0] : 'Resident'}!`;
+
+    // CRITICAL: Re-render dashboard meals to update the minute countdown if the user is on the dashboard
+    if (currentView === 'dashboard') {
+        const activeDayButton = elements.daySelector.querySelector('.day-btn.active');
+        const activeDay = activeDayButton ? activeDayButton.dataset.day : null;
+        if (activeDay) {
+            renderMeals(activeDay);
+        }
+    }
   }
 
   function switchView(viewId) {
@@ -1201,7 +1210,7 @@
       receipt: elements.receiptView,
       profile: elements.profileView,
       team: elements.teamView,
-      complaint: elements.complaintView, // NEW VIEW
+      complaint: elements.complaintView, // NEW
     };
 
     // Hide all views
@@ -1266,6 +1275,24 @@
       if (period === 'AM' && hour === 12) hour = 0; // Midnight (12:xx AM)
       return hour * 60 + minute;
   }
+  
+  // NEW HELPER: Calculate minutes remaining until meal start
+  function minutesRemaining(mealStartTime) {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const startMinutes = timeToMinutes(mealStartTime);
+      
+      // Calculate remaining minutes. If the time is past, it will be negative.
+      let remaining = startMinutes - currentMinutes;
+
+      // Special handling for meals that start tomorrow.
+      // If remaining is negative and small (e.g., within 24 hours), assume it's tomorrow's meal.
+      // For simplicity in this app, we only check the current day.
+      if (remaining < 0) {
+          return 0; // Meal time has passed or is live
+      }
+      return remaining;
+  }
 
   // NEW HELPER: Checks if current time is within the defined meal time range
   function isMealLive(mealName) {
@@ -1277,27 +1304,57 @@
 
       const startMinutes = timeToMinutes(timings.start);
       const endMinutes = timeToMinutes(timings.end);
-
+      
       return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
   }
 
   function renderMeals(day) {
     const meals = weeklySchedule[day] || [];
+    const todayIndex = new Date().getDay() - 1;
+    const currentDayOfWeek = Object.keys(weeklySchedule)[todayIndex < 0 ? 6 : todayIndex];
+    const isToday = day === currentDayOfWeek;
+
     elements.mealsContainer.innerHTML = meals.map(meal => {
       
-      const isLive = isMealLive(meal.name);
-      let statusText = isLive ? 'LIVE' : 'Upcoming';
+      const isLive = isToday && isMealLive(meal.name);
+      let statusText = 'Completed';
       
+      if (isLive) {
+          statusText = 'LIVE';
+      } else if (isToday) {
+          const remainingMins = minutesRemaining(MEAL_TIMINGS[meal.name].start);
+          if (remainingMins > 0) {
+              statusText = `${remainingMins} MINS REMAINING`;
+          }
+          // If remainingMins is 0, it either means it's the next meal or a past meal on the same day.
+          // Since it's not live, if remainingMins is 0, we can still call it 'Upcoming' for simplicity 
+          // or assume it's passed/ended. We'll use the minutes remaining if positive, otherwise 'Upcoming'.
+          else if (remainingMins === 0 && !isLive) {
+              statusText = 'Finished'; 
+          }
+      } else {
+          statusText = 'SCHEDULED';
+      }
+
       const timeRange = MEAL_TIMINGS[meal.name].start === MEAL_TIMINGS[meal.name].end
           ? MEAL_TIMINGS[meal.name].start
           : `${MEAL_TIMINGS[meal.name].start} - ${MEAL_TIMINGS[meal.name].end}`;
+
+      // Determine status class based on calculated status
+      let statusClass = 'status-next';
+      if (isLive) {
+          statusClass = 'status-live';
+      } else if (statusText === 'Finished' || statusText === 'Completed') {
+          statusClass = 'status-next'; // Use next color for finished/scheduled on other day for visual consistency
+          if (isToday) { statusClass = 'status-muted'; } // NEW: optional style for passed meals
+      }
 
 
       return `
         <div class="meal-card ${isLive ? 'active' : ''}">
           <div class="meal-header">
             <div class="meal-name">${meal.name}</div>
-            <div class="meal-status status-${isLive ? 'live' : 'next'}">${statusText}</div>
+            <div class="meal-status ${statusClass}">${statusText}</div>
           </div>
           <div class="meal-time">Time: ${timeRange}</div>
           <div class="meal-items">${meal.items}</div>
@@ -1831,10 +1888,21 @@
   });
 
   // Navigation Click Handlers
+  // MODIFIED BLOCK: Redirects 'receipt' view to external URL
   elements.navItems.forEach(item => {
     item.addEventListener('click', () => {
       const view = item.dataset.view;
-      if (view) {
+      if (view === 'receipt') {
+        // START MODIFICATION: Redirect to external link for Receipts
+        window.open('https://bit.ly/feerecipt', '_blank');
+        showToast('Redirecting to external fee receipt portal...', 'info', 4000);
+        
+        // Optional: Visually set 'Receipts' as active, though no internal view changes
+        elements.navItems.forEach(b => b.classList.remove('active'));
+        item.classList.add('active');
+        
+      } else if (view) {
+        // Original logic for all other views
         switchView(view);
       }
     });
@@ -1921,8 +1989,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     updateClock();
-    // Start clock timer
-    setInterval(updateClock, 1000);
+    // Start clock timer, now set to run every 60 seconds (60000ms) to update meal countdown accurately
+    // Note: It's currently set to 1000ms (1 second) in the original code, using that interval for clock update, and calling renderMeals inside.
+    setInterval(updateClock, 60000); // Changed to 60 seconds (1 minute) interval for countdown accuracy.
     renderTeamView(); // Display initial team/resident list
     renderProfileView(); // Populate profile fields
 
